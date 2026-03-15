@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrewBoard — Market Opportunity</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#040810;
+  color:#e0e6f0;
+  font-family:'Courier New',monospace;
+  overflow:hidden;
+  height:100vh; width:100vw;
+}
+
+/* ── Header ── */
+#header {
+  position:absolute; top:0; left:0; right:0; height:52px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px;
+  background:rgba(4,8,16,0.97);
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  z-index:20;
+}
+#header .brand { display:flex; align-items:center; gap:12px; }
+#header .logo {
+  font-size:17px; font-weight:700; letter-spacing:2px;
+  color:#ffffff;
+}
+#header .logo span { color:#ffffff; }
+#header .tagline {
+  position:absolute; left:50%; transform:translateX(-50%);
+  font-size:11px; color:#ffffff; letter-spacing:1px;
+  white-space:nowrap;
+}
+
+/* ── Language switcher ── */
+.lang-switcher { display:flex; align-items:center; gap:3px; }
+.lang-btn {
+  padding:3px 7px; font-size:8px; letter-spacing:1px; cursor:pointer;
+  font-family:'Courier New',monospace;
+  border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);
+  background:transparent; transition:all 0.2s;
+}
+.lang-btn:hover { color:rgba(255,255,255,0.7); border-color:rgba(255,255,255,0.3); }
+.lang-btn.active { color:#a0f04a; border-color:rgba(160,240,74,0.5); background:rgba(160,240,74,0.07); }
+
+/* ── Live ticker bar ── */
+#ticker {
+  position:absolute; top:52px; left:0; right:0; height:28px;
+  background:rgba(4,8,16,0.95);
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  display:flex; align-items:center; gap:0;
+  overflow:hidden; z-index:15;
+}
+.tick-item {
+  display:flex; align-items:center; gap:8px;
+  padding:0 20px; border-right:1px solid rgba(255,255,255,0.05);
+  white-space:nowrap; font-size:10px; letter-spacing:1px;
+}
+.tick-label { color:#ffffff; }
+.tick-val { font-weight:bold; }
+.tick-val.up   { color:#a0f04a; }
+.tick-val.down { color:#ff6b4a; }
+.tick-val.neu  { color:#4af0c8; }
+.tick-blink { animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+canvas { display:block; }
+
+/* ── Bottom panels ── */
+#bottom {
+  position:absolute; bottom:0; left:0; right:0; height:180px;
+  background:rgba(4,8,16,0.97);
+  border-top:1px solid rgba(255,255,255,0.05);
+  display:flex; gap:0; z-index:15;
+}
+.b-panel {
+  flex:1; padding:12px 16px;
+  border-right:1px solid rgba(255,255,255,0.04);
+}
+.b-panel:last-child { border-right:none; }
+.b-title {
+  font-size:9px; letter-spacing:2px; text-transform:uppercase;
+  margin-bottom:10px; padding-bottom:6px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.b-title.red   { color:#ff6b4a; border-color:rgba(255,107,74,0.2); }
+.b-title.green { color:#a0f04a; border-color:rgba(160,240,74,0.2); }
+.b-title.cyan  { color:#4af0c8; border-color:rgba(74,240,200,0.2); }
+.b-title.gold  { color:#f0c84a; border-color:rgba(240,200,74,0.2); }
+
+.b-big { font-size:22px; letter-spacing:1px; margin-bottom:2px; }
+.b-big.red { color:#ff6b4a; }
+.b-big.green { color:#a0f04a; }
+.b-big.cyan { color:#4af0c8; }
+.b-big.gold { color:#f0c84a; }
+.b-sub { font-size:9px; color:#ffffff; margin-bottom:8px; }
+
+.b-row {
+  display:flex; justify-content:space-between;
+  font-size:9px; padding:2px 0;
+  border-top:1px solid rgba(255,255,255,0.03);
+}
+.b-lbl { color:#ffffff; }
+.b-val { }
+
+/* ── Projection bars ── */
+.proj-bar { margin:4px 0; }
+.proj-label { display:flex; justify-content:space-between; font-size:9px; color:#ffffff; margin-bottom:2px; }
+.proj-track { height:4px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; }
+.proj-fill  { height:100%; border-radius:2px; transition:width 0.8s ease; }
+
+/* ── Node detail panel ── */
+#node-panel {
+  position:absolute; top:90px; right:130px;
+  width:280px; z-index:30;
+  background:rgba(4,8,16,0.97);
+  border:1px solid rgba(255,255,255,0.15);
+  padding:20px 22px;
+  font-size:11px; line-height:2;
+  color:#ffffff;
+  display:none;
+  transition:opacity 0.2s;
+}
+#node-panel .np-title {
+  font-size:17px; font-weight:700; letter-spacing:2px;
+  margin-bottom:4px;
+  color:#ffffff;
+}
+#node-panel .np-type {
+  font-size:9px; letter-spacing:2px; color:#ffffff; opacity:0.55;
+  margin-bottom:12px; padding-bottom:10px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+#node-panel .np-row {
+  display:flex; justify-content:space-between;
+  padding:3px 0; border-top:1px solid rgba(255,255,255,0.05);
+  font-size:10px;
+}
+#node-panel .np-lbl { color:#ffffff; opacity:0.7; }
+#node-panel .np-desc {
+  margin-top:12px; padding-top:10px;
+  border-top:1px solid rgba(255,255,255,0.1);
+  font-size:10px; line-height:1.8; color:#ffffff;
+}
+#node-panel .np-close {
+  position:absolute; top:10px; right:14px;
+  font-size:16px; cursor:pointer; color:#ffffff; opacity:0.4;
+  pointer-events:all;
+}
+#node-panel .np-close:hover { opacity:1; }
+
+/* ── Tooltip ── */
+#tooltip {
+  position:absolute;
+  background:rgba(4,10,20,0.97);
+  border:1px solid rgba(160,240,74,0.4);
+  padding:10px 14px; font-size:10px;
+  pointer-events:none; display:none; z-index:50;
+  min-width:210px; line-height:1.9;
+}
+.tt-title { font-size:11px; letter-spacing:2px; margin-bottom:5px; }
+.tt-row { display:flex; justify-content:space-between; gap:20px; }
+.tt-lbl { color:#ffffff; }
+.tt-red { color:#ff6b4a; }
+.tt-green { color:#a0f04a; }
+.tt-cyan { color:#4af0c8; }
+
+/* ── Scenario switcher ── */
+#scenarios {
+  position:absolute; top:90px; right:16px;
+  display:flex; flex-direction:column; gap:6px; z-index:20;
+}
+.sc-btn {
+  padding:5px 12px; font-size:9px; letter-spacing:1px; cursor:pointer;
+  font-family:'Courier New',monospace;
+  border:1px solid rgba(255,255,255,0.2); color:#ffffff;
+  background:rgba(4,8,16,0.8); text-align:right;
+  transition:all 0.2s;
+}
+.sc-btn:hover { color:#e0e6f0; border-color:rgba(255,255,255,0.2); }
+.sc-btn.active-y1 { color:#4af0c8; border-color:rgba(74,240,200,0.4); background:rgba(74,240,200,0.07); }
+.sc-btn.active-y2 { color:#a0f04a; border-color:rgba(160,240,74,0.4); background:rgba(160,240,74,0.07); }
+.sc-btn.active-y3 { color:#f0c84a; border-color:rgba(240,200,74,0.4); background:rgba(240,200,74,0.07); }
+#sc-label {
+  font-size:8px; color:#ffffff; text-align:right; letter-spacing:1px;
+  margin-top:2px;
+}
+
+/* ── Explainer panel ── */
+#explainer {
+  position:absolute; top:90px; left:10px;
+  width:148px; z-index:20;
+  background:rgba(4,8,16,0.88);
+  border:1px solid rgba(74,240,200,0.12);
+  padding:8px 10px;
+  font-size:8px; line-height:1.65;
+  color:#ffffff; letter-spacing:0.3px;
+  pointer-events:none;
+}
+#explainer p { margin-bottom:5px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="brand">
+    <div class="logo">CREW<span>BOARD</span></div>
+    <div class="tagline" data-i18n="tagline">WEB3 FREELANCE MARKETPLACE — MARKET OPPORTUNITY ANALYSIS</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div class="lang-switcher">
+      <button class="lang-btn" onclick="setLang('DE')">DE</button>
+      <button class="lang-btn active" onclick="setLang('EN')">EN</button>
+      <button class="lang-btn" onclick="setLang('ES')">ES</button>
+      <button class="lang-btn" onclick="setLang('FR')">FR</button>
+      <button class="lang-btn" onclick="setLang('PT')">PT</button>
+    </div>
+    <span style="color:#ffffff;font-size:10px;" class="tick-blink" data-i18n="live">● ANALYSIS ACTIVE</span>
+  </div>
+</div>
+
+<!-- Live ticker -->
+<div id="ticker">
+  <div class="tick-item">
+    <span class="tick-label" data-i18n="tick-upwork">UPWORK / DAY</span>
+    <span class="tick-val neu" id="t-upwork">$11.2M</span>
+  </div>
+  <div class="tick-item">
+    <span class="tick-label" data-i18n="tick-fiverr">FIVERR / DAY</span>
+    <span class="tick-val neu" id="t-fiverr">$2.7M</span>
+  </div>
+  <div class="tick-item">
+    <span class="tick-label" data-i18n="tick-fees">FEES LOST</span>
+    <span class="tick-val down" id="t-fees">-$2.24M</span>
+  </div>
+  <div class="tick-item">
+    <span class="tick-label" data-i18n="tick-cb">CREWBOARD TARGET / DAY</span>
+    <span class="tick-val up" id="t-cb">$890K</span>
+  </div>
+  <div class="tick-item">
+    <span class="tick-label" data-i18n="tick-save">FREELANCER SAVINGS</span>
+    <span class="tick-val up" id="t-save">+$58K</span>
+  </div>
+  <div class="tick-item">
+    <span class="tick-label" data-i18n="tick-tam">MARKET TAM / YEAR</span>
+    <span class="tick-val neu">$1.5T</span>
+  </div>
+  <div class="tick-item">
+    <span class="tick-label" data-i18n="tick-w3fl">WEB3 FREELANCERS GLOBAL</span>
+    <span class="tick-val up" data-i18n="tick-w3fl-val">+180K/Year</span>
+  </div>
+</div>
+
+<!-- Scenario buttons -->
+<div id="scenarios">
+  <div class="sc-btn active-y1" id="sc1" onclick="setScenario(1)">YEAR 1 ↗</div>
+  <div class="sc-btn" id="sc2" onclick="setScenario(2)">YEAR 2 ↗</div>
+  <div class="sc-btn" id="sc3" onclick="setScenario(3)">YEAR 3 ↗</div>
+  <div id="sc-label" data-i18n="sc-label">SCENARIO</div>
+</div>
+
+<div id="explainer">
+  <div data-i18n="exp-title" style="color:#4af0c8;font-size:9px;letter-spacing:2px;margin-bottom:8px;border-bottom:1px solid rgba(74,240,200,0.2);padding-bottom:6px;">WHAT THIS FLOW SHOWS</div>
+  <p data-i18n-html="exp-p1">Every day, <span style="color:#4af0c8;">$13.9M</span> flows from clients through centralized platforms to freelancers.</p>
+  <p data-i18n-html="exp-p2">Upwork &amp; Fiverr pocket <span style="color:#ff6b4a;">15–20% in fees</span> — money that never reaches the freelancer.</p>
+  <p data-i18n-html="exp-p3"><span style="color:#a0f04a;">CrewBoard</span> replaces this with smart contracts: only <span style="color:#a0f04a;">8.5% fee</span>, settlement in ~3 seconds, worldwide.</p>
+  <div style="margin-top:10px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);color:#ffffff;font-size:8px;line-height:1.7;">
+    <div data-i18n="exp-leg1">⬡ Green flows = CrewBoard</div>
+    <div data-i18n="exp-leg2">● White flows = Legacy</div>
+    <div data-i18n="exp-leg3">▼ Red drops = Fee drain</div>
+  </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<!-- Tooltip -->
+<div id="tooltip">
+  <div class="tt-title" id="tt-t">NODE</div>
+  <div class="tt-row"><span class="tt-lbl" data-i18n="tt-typ">Type</span><span id="tt-type">-</span></div>
+  <div class="tt-row"><span class="tt-lbl" data-i18n="tt-vol">Vol / Day</span><span id="tt-vol">-</span></div>
+  <div class="tt-row"><span class="tt-lbl" data-i18n="tt-fee">Fee</span><span class="tt-red" id="tt-fee">-</span></div>
+  <div class="tt-row"><span class="tt-lbl" data-i18n="tt-net">Freelancer receives</span><span class="tt-green" id="tt-net">-</span></div>
+  <div class="tt-row"><span class="tt-lbl" data-i18n="tt-settle">Settlement</span><span id="tt-settle">-</span></div>
+</div>
+
+<!-- Node detail panel -->
+<div id="node-panel">
+  <div class="np-close" onclick="closeNodePanel()">✕</div>
+  <div class="np-title" id="np-title">—</div>
+  <div class="np-type" id="np-type">—</div>
+  <div id="np-rows"></div>
+  <div class="np-desc" id="np-desc"></div>
+</div>
+
+<!-- Bottom data panels -->
+<div id="bottom">
+  <!-- Panel 1: Current market bleed -->
+  <div class="b-panel">
+    <div class="b-title red" data-i18n="bp1-title">CENTRALIZED PLATFORMS — DAILY</div>
+    <div class="b-big red" id="b-lost">-$2.24M</div>
+    <div class="b-sub" data-i18n="bp1-sub">Fee loss for freelancers daily</div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp1-r1">Upwork GMV / Day</span><span style="color:#4af0c8" id="b-upw">$11.2M</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp1-r2">Fiverr GMV / Day</span><span style="color:#4af0c8" id="b-fiv">$2.7M</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp1-r3">Upwork Fee (15%)</span><span style="color:#ff6b4a" id="b-ufee">-$1.68M</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp1-r4">Fiverr Fee (20%)</span><span style="color:#ff6b4a" id="b-ffee">-$540K</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp1-r5">Avg. Payout</span><span style="color:#ff6b4a" data-i18n="bp1-r5v">10–14 Days</span></div>
+  </div>
+
+  <!-- Panel 2: CrewBoard model -->
+  <div class="b-panel">
+    <div class="b-title green" data-i18n="bp2-title">CREWBOARD — WEB3 MODEL</div>
+    <div class="b-big green">8.5%</div>
+    <div class="b-sub" data-i18n="bp2-sub">Smart contract fee instead of 15–25%</div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp2-r1">Settlement Time</span><span style="color:#a0f04a" data-i18n="bp2-r1v">~3 Sec. (on-chain)</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp2-r2">Fee Model</span><span style="color:#a0f04a" data-i18n="bp2-r2v">8.5% (vs 15–25%)</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp2-r3">Access</span><span style="color:#a0f04a" data-i18n="bp2-r3v">197 Countries</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp2-r4">Escrow</span><span style="color:#a0f04a" data-i18n="bp2-r4v">Smart Contract</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp2-r5">Reputation</span><span style="color:#a0f04a" data-i18n="bp2-r5v">On-Chain / NFT</span></div>
+  </div>
+
+  <!-- Panel 3: Year projections -->
+  <div class="b-panel">
+    <div class="b-title cyan" data-i18n="bp3-title">CREWBOARD PROJECTION</div>
+    <div class="b-big cyan" id="b-proj">$325M</div>
+    <div class="b-sub" id="b-proj-sub">Year 1 · 0.5% Web3-Segment</div>
+
+    <div class="proj-bar">
+      <div class="proj-label"><span>YEAR 1</span><span id="p1v" style="color:#4af0c8">$325M GMV</span></div>
+      <div class="proj-track"><div class="proj-fill" id="p1b" style="width:14%;background:#4af0c8"></div></div>
+    </div>
+    <div class="proj-bar">
+      <div class="proj-label"><span>YEAR 2</span><span id="p2v" style="color:#a0f04a">$1.2B GMV</span></div>
+      <div class="proj-track"><div class="proj-fill" id="p2b" style="width:40%;background:#a0f04a"></div></div>
+    </div>
+    <div class="proj-bar">
+      <div class="proj-label"><span>YEAR 3</span><span id="p3v" style="color:#f0c84a">$4.8B GMV</span></div>
+      <div class="proj-track"><div class="proj-fill" id="p3b" style="width:100%;background:#f0c84a"></div></div>
+    </div>
+  </div>
+
+  <!-- Panel 4: Revenue for CrewBoard -->
+  <div class="b-panel">
+    <div class="b-title gold" data-i18n="bp4-title">CREWBOARD REVENUE (8.5% FEE)</div>
+    <div class="b-big gold" id="b-rev">$27.6M</div>
+    <div class="b-sub" id="b-rev-sub">Year 1 Platform Revenue</div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp4-r1">Year 1 GMV</span><span style="color:#f0c84a" id="r1">$325M → $27.6M</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp4-r2">Year 2 GMV</span><span style="color:#f0c84a" id="r2">$1.2B → $102M</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp4-r3">Year 3 GMV</span><span style="color:#f0c84a" id="r3">$4.8B → $408M</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp4-r4">Freelancer saves vs UP</span><span style="color:#a0f04a" data-i18n="bp4-r4v">+$855K/Day (Y3)</span></div>
+    <div class="b-row"><span class="b-lbl" data-i18n="bp4-r5">vs. Upwork Fee (15%)</span><span style="color:#a0f04a" data-i18n="bp4-r5v">1.8× cheaper</span></div>
+  </div>
+</div>
+
+<script>
+// ── Translations ───────────────────────────────────────────────────────────────
+const TRANS = {
+  EN: {
+    tagline:'WEB3 FREELANCE MARKETPLACE — MARKET OPPORTUNITY ANALYSIS',
+    live:'● ANALYSIS ACTIVE',
+    'tick-upwork':'UPWORK / DAY','tick-fiverr':'FIVERR / DAY','tick-fees':'FEES LOST',
+    'tick-cb':'CREWBOARD TARGET / DAY','tick-save':'FREELANCER SAVINGS',
+    'tick-tam':'MARKET TAM / YEAR','tick-w3fl':'WEB3 FREELANCERS GLOBAL','tick-w3fl-val':'+180K/Year',
+    'sc-label':'SCENARIO',
+    'exp-title':'WHAT THIS FLOW SHOWS',
+    'exp-p1':'Every day, <span style="color:#4af0c8;">$13.9M</span> flows from clients through centralized platforms to freelancers.',
+    'exp-p2':'Upwork &amp; Fiverr pocket <span style="color:#ff6b4a;">15–20% in fees</span> — money that never reaches the freelancer.',
+    'exp-p3':'<span style="color:#a0f04a;">CrewBoard</span> replaces this with smart contracts: only <span style="color:#a0f04a;">8.5% fee</span>, settlement in ~3 seconds, worldwide.',
+    'exp-leg1':'⬡ Green flows = CrewBoard','exp-leg2':'● White flows = Legacy','exp-leg3':'▼ Red drops = Fee drain',
+    'tt-typ':'Type','tt-vol':'Vol / Day','tt-fee':'Fee','tt-net':'Freelancer receives','tt-settle':'Settlement',
+    'tt-web3-flow':'⬡ CREWBOARD FLOW','tt-legacy-flow':'LEGACY FLOW',
+    'tt-day':' / Day','tt-onchain':'~3 sec. on-chain','tt-legacy-days':'10–14 Days','tt-none':'None',
+    'type-client':'CLIENT','type-platform':'LEGACY PLATFORM','type-crewboard':'WEB3 MARKETPLACE','type-fl':'FREELANCER',
+    'np-vol':'Vol / Day','np-fee':'Fee','np-feeday':'Fee / Day','np-net':'Freelancer receives','np-settle':'Settlement','np-in':'Inbound','np-out':'Outbound',
+    'col-clients':'CLIENTS','col-platform':'LEGACY PLATF.','col-cb':'CREWBOARD','col-fl':'FREELANCERS',
+    'rev-sub-suffix':' Platform Revenue',
+    'bp1-title':'CENTRALIZED PLATFORMS — DAILY','bp1-sub':'Fee loss for freelancers daily',
+    'bp1-r1':'Upwork GMV / Day','bp1-r2':'Fiverr GMV / Day','bp1-r3':'Upwork Fee (15%)','bp1-r4':'Fiverr Fee (20%)','bp1-r5':'Avg. Payout','bp1-r5v':'10–14 Days',
+    'bp2-title':'CREWBOARD — WEB3 MODEL','bp2-sub':'Smart contract fee instead of 15–25%',
+    'bp2-r1':'Settlement Time','bp2-r1v':'~3 Sec. (on-chain)','bp2-r2':'Fee Model','bp2-r2v':'8.5% (vs 15–25%)','bp2-r3':'Access','bp2-r3v':'197 Countries','bp2-r4':'Escrow','bp2-r4v':'Smart Contract','bp2-r5':'Reputation','bp2-r5v':'On-Chain / NFT',
+    'bp3-title':'CREWBOARD PROJECTION',
+    'bp4-title':'CREWBOARD REVENUE (8.5% FEE)',
+    'bp4-r1':'Year 1 GMV','bp4-r2':'Year 2 GMV','bp4-r3':'Year 3 GMV','bp4-r4':'Freelancer saves vs UP','bp4-r4v':'+$855K/Day (Y3)','bp4-r5':'vs. Upwork Fee (15%)','bp4-r5v':'1.8× cheaper',
+    'node-ENT':'Large enterprises & corporations. High project volumes, mostly long-term. Currently paying 15–20% platform fees on top of freelancer rates.',
+    'node-SMB':'Small & medium businesses. Regular projects for marketing, development & design. Price-sensitive — benefit greatly from lower Web3 fees.',
+    'node-STUP':'Startups with limited budgets. Rely heavily on freelancers instead of full-time hires. Often Web3-native and open to decentralized platforms.',
+    'node-DAO':'Decentralized organizations & Web3 projects. Already pay in crypto. Natural target for CrewBoard — no fiat conversion needed.',
+    'node-UPW':'Market leader with $11.2M daily GMV. Charges 15% fee from freelancers + 3% from clients. Payouts take 10–14 days. Blocks accounts without explanation.',
+    'node-FIV':'Focus on micro-jobs & packages. $2.7M daily. Takes 20% from freelancer earnings. Strong ranking system favors established sellers.',
+    'node-CB':'Web3 freelance marketplace with smart contract escrow. Only 8.5% fee. Settlement in ~3 seconds on-chain. 197 countries, no bank account needed. Reputation stored as NFT on-chain.',
+    'node-FL_DEV':'Software developers — largest freelancer group. $6.2M daily volume. Highly Web3-native, many already have wallets.',
+    'node-FL_DES':'UI/UX, branding & motion designers. $3.1M daily. Growing demand driven by Web3 & NFT projects.',
+    'node-FL_MKT':'Marketing specialists for growth, social & content. $1.9M daily. High potential in crypto community management.',
+    'node-FL_DAT':'Data scientists & AI experts. $2.1M daily. Rapidly growing segment — AI projects booming worldwide.',
+    'node-FL_W3':'Web3 developers: Solidity, smart contracts, DeFi, NFT. $3.8M daily. Core target for CrewBoard — already pay & receive in crypto.',
+  },
+  DE: {
+    tagline:'WEB3 FREELANCE MARKETPLACE — MARKTCHANCEN ANALYSE',
+    live:'● ANALYSE AKTIV',
+    'tick-upwork':'UPWORK / TAG','tick-fiverr':'FIVERR / TAG','tick-fees':'GEBÜHREN VERLOREN',
+    'tick-cb':'CREWBOARD ZIEL / TAG','tick-save':'FREELANCER SPAREN',
+    'tick-tam':'MARKT TAM / JAHR','tick-w3fl':'WEB3 FREELANCER GLOBAL','tick-w3fl-val':'+180K/Jahr',
+    'sc-label':'SZENARIO',
+    'exp-title':'WAS DIESER FLOW ZEIGT',
+    'exp-p1':'Täglich fließen <span style="color:#4af0c8;">$13.9M</span> von Kunden über zentrale Plattformen zu Freelancern.',
+    'exp-p2':'Upwork &amp; Fiverr kassieren <span style="color:#ff6b4a;">15–20% Gebühren</span> — Geld, das nie beim Freelancer ankommt.',
+    'exp-p3':'<span style="color:#a0f04a;">CrewBoard</span> ersetzt das mit Smart Contracts: nur <span style="color:#a0f04a;">8.5% Fee</span>, Settlement in ~3 Sekunden, weltweit.',
+    'exp-leg1':'⬡ Grüne Ströme = CrewBoard','exp-leg2':'● Weiße Ströme = Legacy','exp-leg3':'▼ Rote Tropfen = Gebühren-Verlust',
+    'tt-typ':'Typ','tt-vol':'Vol / Tag','tt-fee':'Gebühr','tt-net':'Freelancer erhält','tt-settle':'Settlement',
+    'tt-web3-flow':'⬡ CREWBOARD FLOW','tt-legacy-flow':'LEGACY FLOW',
+    'tt-day':' / Tag','tt-onchain':'~3 Sek. on-chain','tt-legacy-days':'10–14 Tage','tt-none':'Keine',
+    'type-client':'AUFTRAGGEBER','type-platform':'LEGACY PLATTFORM','type-crewboard':'WEB3 MARKTPLATZ','type-fl':'FREELANCER',
+    'np-vol':'Vol / Tag','np-fee':'Gebühr','np-feeday':'Fee / Tag','np-net':'Freelancer erhält','np-settle':'Settlement','np-in':'Eingehend','np-out':'Ausgehend',
+    'col-clients':'AUFTRAGGEBER','col-platform':'LEGACY PLATTF.','col-cb':'CREWBOARD','col-fl':'FREELANCER',
+    'rev-sub-suffix':' Plattform-Einnahmen',
+    'bp1-title':'ZENTRALISIERTE PLATTFORMEN — TÄGL.','bp1-sub':'Gebühren-Verlust für Freelancer täglich',
+    'bp1-r1':'Upwork GMV / Tag','bp1-r2':'Fiverr GMV / Tag','bp1-r3':'Upwork Fee (15%)','bp1-r4':'Fiverr Fee (20%)','bp1-r5':'Ø Auszahlung','bp1-r5v':'10–14 Tage',
+    'bp2-title':'CREWBOARD — WEB3 MODELL','bp2-sub':'Smart Contract Gebühr statt 15–25%',
+    'bp2-r1':'Settlement-Zeit','bp2-r1v':'~3 Sek. (on-chain)','bp2-r2':'Gebühr Modell','bp2-r2v':'8.5% (vs 15–25%)','bp2-r3':'Zugang','bp2-r3v':'197 Länder','bp2-r4':'Escrow','bp2-r4v':'Smart Contract','bp2-r5':'Reputation','bp2-r5v':'On-Chain / NFT',
+    'bp3-title':'CREWBOARD HOCHRECHNUNG',
+    'bp4-title':'CREWBOARD EINNAHMEN (8.5% FEE)',
+    'bp4-r1':'Year 1 GMV','bp4-r2':'Year 2 GMV','bp4-r3':'Year 3 GMV','bp4-r4':'Freelancer spart vs UP','bp4-r4v':'+$855K/Tag (Y3)','bp4-r5':'vs. Upwork Fee (15%)','bp4-r5v':'1.8× günstiger',
+    'node-ENT':'Große Unternehmen & Konzerne. Hohe Projektvolumen, meist Langzeitprojekte. Zahlen aktuell 15–20% Plattformgebühren zusätzlich zu Freelancer-Honoraren.',
+    'node-SMB':'Kleine & mittlere Unternehmen. Regelmäßige Projekte für Marketing, Entwicklung & Design. Preissensibel — profitieren stark von niedrigeren Web3-Gebühren.',
+    'node-STUP':'Startups mit begrenztem Budget. Nutzen intensiv Freelancer statt Festanstellungen. Oft Web3-affin und offen für dezentrale Plattformen.',
+    'node-DAO':'Dezentrale Organisationen & Web3-Projekte. Zahlen bereits in Crypto. Natürliche Zielgruppe für CrewBoard — kein Fiat-Umweg nötig.',
+    'node-UPW':'Marktführer mit $11.2M täglichem GMV. Kassiert 15% Gebühr vom Freelancer + 3% vom Kunden. Auszahlung dauert 10–14 Tage. Sperrt Accounts ohne Begründung.',
+    'node-FIV':'Fokus auf Micro-Jobs & Pakete. $2.7M täglich. Nimmt 20% vom Freelancer-Honorar. Starkes Ranking-System bevorzugt etablierte Seller.',
+    'node-CB':'Web3 Freelance Marktplatz mit Smart Contract Escrow. Nur 8.5% Gebühr. Settlement in ~3 Sekunden on-chain. 197 Länder, kein Bankkonto nötig. Reputation als NFT on-chain gespeichert.',
+    'node-FL_DEV':'Software-Entwickler — größte Freelancer-Gruppe. $6.2M tägliches Volumen. Sehr Web3-affin, viele haben eigene Wallets.',
+    'node-FL_DES':'Designer für UI/UX, Branding & Motion. $3.1M täglich. Wachsende Nachfrage durch Web3 & NFT-Projekte.',
+    'node-FL_MKT':'Marketing-Spezialisten für Growth, Social & Content. $1.9M täglich. Hohes Potenzial durch Crypto-Community-Management.',
+    'node-FL_DAT':'Data Scientists & KI-Experten. $2.1M täglich. Stark wachsendes Segment — AI-Projekte boomen weltweit.',
+    'node-FL_W3':'Web3-Entwickler: Solidity, Smart Contracts, DeFi, NFT. $3.8M täglich. Kernzielgruppe von CrewBoard — zahlen & empfangen bereits in Crypto.',
+  },
+  ES: {
+    tagline:'MERCADO FREELANCE WEB3 — ANÁLISIS DE OPORTUNIDAD',
+    live:'● ANÁLISIS ACTIVO',
+    'tick-upwork':'UPWORK / DÍA','tick-fiverr':'FIVERR / DÍA','tick-fees':'COMISIONES PERDIDAS',
+    'tick-cb':'META CREWBOARD / DÍA','tick-save':'AHORRO FREELANCER',
+    'tick-tam':'TAM MERCADO / AÑO','tick-w3fl':'FREELANCERS WEB3 GLOBAL','tick-w3fl-val':'+180K/Año',
+    'sc-label':'ESCENARIO',
+    'exp-title':'QUÉ MUESTRA ESTE FLUJO',
+    'exp-p1':'Cada día, <span style="color:#4af0c8;">$13.9M</span> fluyen de clientes a través de plataformas centralizadas hacia freelancers.',
+    'exp-p2':'Upwork &amp; Fiverr se quedan con <span style="color:#ff6b4a;">15–20% en comisiones</span> — dinero que nunca llega al freelancer.',
+    'exp-p3':'<span style="color:#a0f04a;">CrewBoard</span> reemplaza esto con contratos inteligentes: solo <span style="color:#a0f04a;">8.5% de comisión</span>, liquidación en ~3 segundos, en todo el mundo.',
+    'exp-leg1':'⬡ Flujos verdes = CrewBoard','exp-leg2':'● Flujos blancos = Legacy','exp-leg3':'▼ Gotas rojas = Pérdida de comisiones',
+    'tt-typ':'Tipo','tt-vol':'Vol / Día','tt-fee':'Comisión','tt-net':'Freelancer recibe','tt-settle':'Liquidación',
+    'tt-web3-flow':'⬡ CREWBOARD FLOW','tt-legacy-flow':'LEGACY FLOW',
+    'tt-day':' / Día','tt-onchain':'~3 seg. on-chain','tt-legacy-days':'10–14 Días','tt-none':'Ninguna',
+    'type-client':'CLIENTE','type-platform':'PLATAFORMA LEGACY','type-crewboard':'MERCADO WEB3','type-fl':'FREELANCER',
+    'np-vol':'Vol / Día','np-fee':'Comisión','np-feeday':'Fee / Día','np-net':'Freelancer recibe','np-settle':'Liquidación','np-in':'Entrante','np-out':'Saliente',
+    'col-clients':'CLIENTES','col-platform':'PLAT. LEGACY','col-cb':'CREWBOARD','col-fl':'FREELANCERS',
+    'rev-sub-suffix':' Ingresos Plataforma',
+    'bp1-title':'PLATAFORMAS CENTRALIZADAS — DIARIO','bp1-sub':'Pérdida de comisiones para freelancers diariamente',
+    'bp1-r1':'Upwork GMV / Día','bp1-r2':'Fiverr GMV / Día','bp1-r3':'Comisión Upwork (15%)','bp1-r4':'Comisión Fiverr (20%)','bp1-r5':'Pago Promedio','bp1-r5v':'10–14 Días',
+    'bp2-title':'CREWBOARD — MODELO WEB3','bp2-sub':'Comisión Smart Contract en lugar de 15–25%',
+    'bp2-r1':'Tiempo Liquidación','bp2-r1v':'~3 Seg. (on-chain)','bp2-r2':'Modelo Comisión','bp2-r2v':'8.5% (vs 15–25%)','bp2-r3':'Acceso','bp2-r3v':'197 Países','bp2-r4':'Escrow','bp2-r4v':'Smart Contract','bp2-r5':'Reputación','bp2-r5v':'On-Chain / NFT',
+    'bp3-title':'PROYECCIÓN CREWBOARD',
+    'bp4-title':'INGRESOS CREWBOARD (8.5% FEE)',
+    'bp4-r1':'GMV Año 1','bp4-r2':'GMV Año 2','bp4-r3':'GMV Año 3','bp4-r4':'Freelancer ahorra vs UP','bp4-r4v':'+$855K/Día (Y3)','bp4-r5':'vs. Comisión Upwork (15%)','bp4-r5v':'1.8× más barato',
+    'node-ENT':'Grandes empresas y corporaciones. Alto volumen de proyectos, en su mayoría a largo plazo. Actualmente pagan 15–20% en comisiones de plataforma.',
+    'node-SMB':'Pequeñas y medianas empresas. Proyectos regulares de marketing, desarrollo y diseño. Sensibles al precio — se benefician enormemente de las menores tarifas Web3.',
+    'node-STUP':'Startups con presupuesto limitado. Dependen en gran medida de freelancers. A menudo nativas en Web3 y abiertas a plataformas descentralizadas.',
+    'node-DAO':'Organizaciones descentralizadas y proyectos Web3. Ya pagan en cripto. Objetivo natural para CrewBoard — sin conversión a fiat.',
+    'node-UPW':'Líder del mercado con $11.2M de GMV diario. Cobra el 15% al freelancer + 3% al cliente. Los pagos tardan 10–14 días. Bloquea cuentas sin explicación.',
+    'node-FIV':'Enfocado en micro-trabajos y paquetes. $2.7M diarios. Toma el 20% de los ingresos del freelancer. Su sistema de ranking favorece a los vendedores establecidos.',
+    'node-CB':'Mercado freelance Web3 con escrow de contrato inteligente. Solo 8.5% de comisión. Liquidación en ~3 segundos on-chain. 197 países, sin necesidad de cuenta bancaria. Reputación almacenada como NFT on-chain.',
+    'node-FL_DEV':'Desarrolladores de software — el grupo freelancer más grande. $6.2M de volumen diario. Muy afines a Web3, muchos ya tienen wallets.',
+    'node-FL_DES':'Diseñadores de UI/UX, branding y motion. $3.1M diarios. Demanda creciente impulsada por proyectos Web3 y NFT.',
+    'node-FL_MKT':'Especialistas en marketing para growth, redes sociales y contenido. $1.9M diarios. Alto potencial en gestión de comunidades crypto.',
+    'node-FL_DAT':'Científicos de datos y expertos en IA. $2.1M diarios. Segmento de rápido crecimiento — los proyectos de IA están en auge mundialmente.',
+    'node-FL_W3':'Desarrolladores Web3: Solidity, contratos inteligentes, DeFi, NFT. $3.8M diarios. Objetivo principal de CrewBoard — ya pagan y reciben en cripto.',
+  },
+  FR: {
+    tagline:'MARCHÉ FREELANCE WEB3 — ANALYSE D\'OPPORTUNITÉ',
+    live:'● ANALYSE ACTIVE',
+    'tick-upwork':'UPWORK / JOUR','tick-fiverr':'FIVERR / JOUR','tick-fees':'FRAIS PERDUS',
+    'tick-cb':'OBJECTIF CB / JOUR','tick-save':'ÉCONOMIES FREELANCE',
+    'tick-tam':'TAM MARCHÉ / AN','tick-w3fl':'FREELANCERS WEB3 GLOBAL','tick-w3fl-val':'+180K/An',
+    'sc-label':'SCÉNARIO',
+    'exp-title':'CE QUE MONTRE CE FLUX',
+    'exp-p1':'Chaque jour, <span style="color:#4af0c8;">13,9M$</span> circulent des clients vers les freelances via des plateformes centralisées.',
+    'exp-p2':'Upwork &amp; Fiverr prennent <span style="color:#ff6b4a;">15–20% de frais</span> — argent qui n\'arrive jamais au freelance.',
+    'exp-p3':'<span style="color:#a0f04a;">CrewBoard</span> remplace cela par des contrats intelligents : seulement <span style="color:#a0f04a;">8.5% de frais</span>, règlement en ~3 secondes, dans le monde entier.',
+    'exp-leg1':'⬡ Flux verts = CrewBoard','exp-leg2':'● Flux blancs = Legacy','exp-leg3':'▼ Gouttes rouges = Perte de frais',
+    'tt-typ':'Type','tt-vol':'Vol / Jour','tt-fee':'Frais','tt-net':'Freelancer reçoit','tt-settle':'Règlement',
+    'tt-web3-flow':'⬡ CREWBOARD FLOW','tt-legacy-flow':'LEGACY FLOW',
+    'tt-day':' / Jour','tt-onchain':'~3 sec. on-chain','tt-legacy-days':'10–14 Jours','tt-none':'Aucune',
+    'type-client':'CLIENT','type-platform':'PLATEFORME LEGACY','type-crewboard':'MARCHÉ WEB3','type-fl':'FREELANCER',
+    'np-vol':'Vol / Jour','np-fee':'Frais','np-feeday':'Frais / Jour','np-net':'Freelancer reçoit','np-settle':'Règlement','np-in':'Entrant','np-out':'Sortant',
+    'col-clients':'CLIENTS','col-platform':'PLATEF. LEGACY','col-cb':'CREWBOARD','col-fl':'FREELANCERS',
+    'rev-sub-suffix':' Revenus Plateforme',
+    'bp1-title':'PLATEFORMES CENTRALISÉES — QUOTIDIEN','bp1-sub':'Perte de frais pour les freelances quotidiennement',
+    'bp1-r1':'Upwork GMV / Jour','bp1-r2':'Fiverr GMV / Jour','bp1-r3':'Frais Upwork (15%)','bp1-r4':'Frais Fiverr (20%)','bp1-r5':'Paiement Moyen','bp1-r5v':'10–14 Jours',
+    'bp2-title':'CREWBOARD — MODÈLE WEB3','bp2-sub':'Frais Smart Contract au lieu de 15–25%',
+    'bp2-r1':'Délai Règlement','bp2-r1v':'~3 Sec. (on-chain)','bp2-r2':'Modèle de Frais','bp2-r2v':'8.5% (vs 15–25%)','bp2-r3':'Accès','bp2-r3v':'197 Pays','bp2-r4':'Escrow','bp2-r4v':'Smart Contract','bp2-r5':'Réputation','bp2-r5v':'On-Chain / NFT',
+    'bp3-title':'PROJECTION CREWBOARD',
+    'bp4-title':'REVENUS CREWBOARD (8.5% FEE)',
+    'bp4-r1':'GMV Année 1','bp4-r2':'GMV Année 2','bp4-r3':'GMV Année 3','bp4-r4':'Économie freelance vs UP','bp4-r4v':'+$855K/Jour (Y3)','bp4-r5':'vs. Frais Upwork (15%)','bp4-r5v':'1.8× moins cher',
+    'node-ENT':'Grandes entreprises et corporations. Volumes de projets élevés, surtout à long terme. Paient actuellement 15–20% de frais de plateforme.',
+    'node-SMB':'Petites et moyennes entreprises. Projets réguliers en marketing, développement et design. Sensibles aux prix — bénéficient grandement des frais Web3 réduits.',
+    'node-STUP':'Startups avec un budget limité. Recourent massivement aux freelances. Souvent natives Web3 et ouvertes aux plateformes décentralisées.',
+    'node-DAO':'Organisations décentralisées et projets Web3. Paient déjà en crypto. Cible naturelle pour CrewBoard — pas de conversion fiat nécessaire.',
+    'node-UPW':'Leader du marché avec 11,2M$ de GMV quotidien. Prend 15% au freelance + 3% au client. Les paiements prennent 10–14 jours. Bloque des comptes sans explication.',
+    'node-FIV':'Focalisé sur les micro-jobs et packages. 2,7M$ quotidiens. Prend 20% des gains du freelance. Le système de classement favorise les vendeurs établis.',
+    'node-CB':'Marché freelance Web3 avec escrow en contrat intelligent. Seulement 8.5% de frais. Règlement en ~3 secondes on-chain. 197 pays, sans compte bancaire. Réputation stockée en NFT on-chain.',
+    'node-FL_DEV':'Développeurs logiciels — le plus grand groupe freelance. 6,2M$ de volume quotidien. Très familiers avec Web3, beaucoup ont déjà des wallets.',
+    'node-FL_DES':'Designers UI/UX, branding et motion. 3,1M$ quotidiens. Demande croissante due aux projets Web3 et NFT.',
+    'node-FL_MKT':'Spécialistes marketing en croissance, social et contenu. 1,9M$ quotidiens. Fort potentiel dans la gestion des communautés crypto.',
+    'node-FL_DAT':'Data scientists et experts en IA. 2,1M$ quotidiens. Segment en forte croissance — les projets IA explosent dans le monde entier.',
+    'node-FL_W3':'Développeurs Web3 : Solidity, contrats intelligents, DeFi, NFT. 3,8M$ quotidiens. Cœur de cible de CrewBoard — paient et reçoivent déjà en crypto.',
+  },
+  PT: {
+    tagline:'MERCADO FREELANCE WEB3 — ANÁLISE DE OPORTUNIDADE',
+    live:'● ANÁLISE ATIVA',
+    'tick-upwork':'UPWORK / DIA','tick-fiverr':'FIVERR / DIA','tick-fees':'TAXAS PERDIDAS',
+    'tick-cb':'META CREWBOARD / DIA','tick-save':'ECONOMIA FREELANCER',
+    'tick-tam':'TAM MERCADO / ANO','tick-w3fl':'FREELANCERS WEB3 GLOBAL','tick-w3fl-val':'+180K/Ano',
+    'sc-label':'CENÁRIO',
+    'exp-title':'O QUE ESTE FLUXO MOSTRA',
+    'exp-p1':'Cada dia, <span style="color:#4af0c8;">$13.9M</span> fluem de clientes através de plataformas centralizadas para freelancers.',
+    'exp-p2':'Upwork &amp; Fiverr ficam com <span style="color:#ff6b4a;">15–20% em taxas</span> — dinheiro que nunca chega ao freelancer.',
+    'exp-p3':'<span style="color:#a0f04a;">CrewBoard</span> substitui isso com contratos inteligentes: apenas <span style="color:#a0f04a;">8.5% de taxa</span>, liquidação em ~3 segundos, em todo o mundo.',
+    'exp-leg1':'⬡ Fluxos verdes = CrewBoard','exp-leg2':'● Fluxos brancos = Legacy','exp-leg3':'▼ Gotas vermelhas = Perda de taxas',
+    'tt-typ':'Tipo','tt-vol':'Vol / Dia','tt-fee':'Taxa','tt-net':'Freelancer recebe','tt-settle':'Liquidação',
+    'tt-web3-flow':'⬡ CREWBOARD FLOW','tt-legacy-flow':'LEGACY FLOW',
+    'tt-day':' / Dia','tt-onchain':'~3 seg. on-chain','tt-legacy-days':'10–14 Dias','tt-none':'Nenhuma',
+    'type-client':'CLIENTE','type-platform':'PLATAFORMA LEGADO','type-crewboard':'MERCADO WEB3','type-fl':'FREELANCER',
+    'np-vol':'Vol / Dia','np-fee':'Taxa','np-feeday':'Taxa / Dia','np-net':'Freelancer recebe','np-settle':'Liquidação','np-in':'Entrada','np-out':'Saída',
+    'col-clients':'CLIENTES','col-platform':'PLAT. LEGADO','col-cb':'CREWBOARD','col-fl':'FREELANCERS',
+    'rev-sub-suffix':' Receita da Plataforma',
+    'bp1-title':'PLATAFORMAS CENTRALIZADAS — DIÁRIO','bp1-sub':'Perda de taxas para freelancers diariamente',
+    'bp1-r1':'Upwork GMV / Dia','bp1-r2':'Fiverr GMV / Dia','bp1-r3':'Taxa Upwork (15%)','bp1-r4':'Taxa Fiverr (20%)','bp1-r5':'Pagamento Médio','bp1-r5v':'10–14 Dias',
+    'bp2-title':'CREWBOARD — MODELO WEB3','bp2-sub':'Taxa Smart Contract em vez de 15–25%',
+    'bp2-r1':'Tempo Liquidação','bp2-r1v':'~3 Seg. (on-chain)','bp2-r2':'Modelo de Taxa','bp2-r2v':'8.5% (vs 15–25%)','bp2-r3':'Acesso','bp2-r3v':'197 Países','bp2-r4':'Escrow','bp2-r4v':'Smart Contract','bp2-r5':'Reputação','bp2-r5v':'On-Chain / NFT',
+    'bp3-title':'PROJEÇÃO CREWBOARD',
+    'bp4-title':'RECEITA CREWBOARD (8.5% FEE)',
+    'bp4-r1':'GMV Ano 1','bp4-r2':'GMV Ano 2','bp4-r3':'GMV Ano 3','bp4-r4':'Freelancer economiza vs UP','bp4-r4v':'+$855K/Dia (Y3)','bp4-r5':'vs. Taxa Upwork (15%)','bp4-r5v':'1.8× mais barato',
+    'node-ENT':'Grandes empresas e corporações. Alto volume de projetos, principalmente de longo prazo. Atualmente pagam 15–20% em taxas de plataforma.',
+    'node-SMB':'Pequenas e médias empresas. Projetos regulares de marketing, desenvolvimento e design. Sensíveis ao preço — se beneficiam das menores taxas Web3.',
+    'node-STUP':'Startups com orçamento limitado. Dependem muito de freelancers. Frequentemente nativas em Web3 e abertas a plataformas descentralizadas.',
+    'node-DAO':'Organizações descentralizadas e projetos Web3. Já pagam em cripto. Alvo natural para o CrewBoard — sem necessidade de conversão fiat.',
+    'node-UPW':'Líder de mercado com $11.2M de GMV diário. Cobra 15% do freelancer + 3% do cliente. Pagamentos levam 10–14 dias. Bloqueia contas sem explicação.',
+    'node-FIV':'Foco em micro-trabalhos e pacotes. $2.7M diários. Cobra 20% dos ganhos do freelancer. Sistema de ranking favorece vendedores estabelecidos.',
+    'node-CB':'Mercado freelance Web3 com escrow em contrato inteligente. Apenas 8.5% de taxa. Liquidação em ~3 segundos on-chain. 197 países, sem conta bancária. Reputação armazenada como NFT on-chain.',
+    'node-FL_DEV':'Desenvolvedores de software — maior grupo freelancer. $6.2M de volume diário. Muito familiarizados com Web3, muitos já têm wallets.',
+    'node-FL_DES':'Designers de UI/UX, branding e motion. $3.1M diários. Demanda crescente impulsionada por projetos Web3 e NFT.',
+    'node-FL_MKT':'Especialistas em marketing para growth, social e conteúdo. $1.9M diários. Alto potencial no gerenciamento de comunidades crypto.',
+    'node-FL_DAT':'Cientistas de dados e especialistas em IA. $2.1M diários. Segmento em crescimento acelerado — projetos de IA em expansão mundial.',
+    'node-FL_W3':'Desenvolvedores Web3: Solidity, contratos inteligentes, DeFi, NFT. $3.8M diários. Principal alvo do CrewBoard — já pagam e recebem em cripto.',
+  },
+};
+
+let currentLang = 'EN';
+function T(key) { return (TRANS[currentLang] || TRANS.EN)[key] || key; }
+function setLang(code) {
+  currentLang = code;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = T(el.dataset.i18nHtml); });
+  document.querySelectorAll('.lang-btn').forEach(btn => { btn.classList.toggle('active', btn.textContent.trim() === code); });
+  document.documentElement.lang = code.toLowerCase();
+}
+
+// ── Colors ────────────────────────────────────────────────────────────────────
+const COL = {
+  ent:     '#4a90f0',
+  smb:     '#a06af0',
+  upwork:  '#1a3a6b',
+  fiverr:  '#2ecc71',
+  cb:      '#a0f04a',
+  dev:     '#4af0c8',
+  design:  '#f04a8a',
+  mkt:     '#4a8af0',
+  data:    '#f0e04a',
+  crypto:  '#a0f04a',
+  fee:     '#ff3020',
+};
+
+// ── Scenarios ──────────────────────────────────────────────────────────────────
+const SCENARIOS = {
+  1: { label:'Year 1', gmv:325e6,  share:'0.5% Web3-Segment', rev:27.6e6, col:'#4af0c8', projDay: 890411  },
+  2: { label:'Year 2', gmv:1.2e9,  share:'2% Web3-Segment',   rev:102e6,  col:'#a0f04a', projDay: 3287671 },
+  3: { label:'Year 3', gmv:4.8e9,  share:'8% Web3-Segment',   rev:408e6,  col:'#f0c84a', projDay:13150685 },
+};
+let activeScenario = 1;
+
+function setScenario(n) {
+  activeScenario = n;
+  [1,2,3].forEach(i => {
+    const btn = document.getElementById('sc'+i);
+    btn.className = 'sc-btn' + (i===n ? ` active-y${i}` : '');
+  });
+  const s = SCENARIOS[n];
+  const gmvStr = s.gmv >= 1e9 ? '$'+(s.gmv/1e9).toFixed(1)+'B' : '$'+(s.gmv/1e6).toFixed(0)+'M';
+  const revStr = s.rev >= 1e6 ? '$'+(s.rev/1e6).toFixed(1)+'M' : '$'+(s.rev/1e3).toFixed(0)+'K';
+  document.getElementById('b-proj').textContent = gmvStr+' GMV';
+  document.getElementById('b-proj').style.color = s.col;
+  document.getElementById('b-proj-sub').textContent = `${s.label} · ${s.share}`;
+  document.getElementById('b-rev').textContent = revStr;
+  document.getElementById('b-rev').style.color = s.col;
+  document.getElementById('b-rev-sub').textContent = `${s.label}${T('rev-sub-suffix')}`;
+  document.getElementById('t-cb').textContent = '$'+Math.round(s.projDay/1000)+'K'+T('tt-day');
+  document.getElementById('t-save').textContent = '+$'+Math.round(s.projDay*0.065/1000)+'K'+T('tt-day');
+
+  // Highlight active CB node
+  spawnParticles();
+}
+
+// ── Nodes ─────────────────────────────────────────────────────────────────────
+let nodes = [
+  // Clients
+  { id:'ENT',  label:'Enterprise', type:'client', cat:'ent',  vol:8500000,  x:0,y:0,r:26 },
+  { id:'SMB',  label:'SMB / Scale',type:'client', cat:'smb',  vol:5200000,  x:0,y:0,r:21 },
+  { id:'STUP', label:'Startups',   type:'client', cat:'smb',  vol:2800000,  x:0,y:0,r:17 },
+  { id:'DAO',  label:'DAOs / Web3',type:'client', cat:'cb',   vol:1400000,  x:0,y:0,r:14 },
+
+  // Current platforms
+  { id:'UPW',  label:'Upwork',  type:'platform', cat:'upwork', vol:11200000, fee:0.15, settle:'10-14 Days', x:0,y:0,r:36 },
+  { id:'FIV',  label:'Fiverr',  type:'platform', cat:'fiverr', vol:2700000,  fee:0.20, settle:'14 Days',    x:0,y:0,r:24 },
+
+  // CrewBoard
+  { id:'CB', label:'CrewBoard', type:'crewboard', cat:'cb', vol:890000, fee:0.085, settle:'~3 sec.', x:0,y:0,r:40 },
+
+  // Freelancers
+  { id:'FL_DEV', label:'Developer',  type:'fl', cat:'dev',    vol:6200000, x:0,y:0,r:28 },
+  { id:'FL_DES', label:'Designer',   type:'fl', cat:'design', vol:3100000, x:0,y:0,r:22 },
+  { id:'FL_MKT', label:'Marketing',  type:'fl', cat:'mkt',    vol:1900000, x:0,y:0,r:17 },
+  { id:'FL_DAT', label:'Data / AI',  type:'fl', cat:'data',   vol:2100000, x:0,y:0,r:18 },
+  { id:'FL_W3',  label:'Web3 Dev',   type:'fl', cat:'crypto', vol:3800000, x:0,y:0,r:26 },
+];
+
+// ── Flows ─────────────────────────────────────────────────────────────────────
+const flows = [
+  // → Upwork
+  { from:'ENT',  to:'UPW', vol:5800000, type:'curr' },
+  { from:'SMB',  to:'UPW', vol:3200000, type:'curr' },
+  { from:'STUP', to:'UPW', vol:1800000, type:'curr' },
+
+  // → Fiverr
+  { from:'SMB',  to:'FIV', vol:1400000, type:'curr' },
+  { from:'STUP', to:'FIV', vol:800000,  type:'curr' },
+  { from:'ENT',  to:'FIV', vol:600000,  type:'curr' },
+
+  // Upwork → Freelancers (after fee)
+  { from:'UPW', to:'FL_DEV', vol:3800000, type:'curr' },
+  { from:'UPW', to:'FL_DES', vol:1600000, type:'curr' },
+  { from:'UPW', to:'FL_DAT', vol:1800000, type:'curr' },
+  { from:'UPW', to:'FL_MKT', vol:900000,  type:'curr' },
+
+  // Fiverr → Freelancers
+  { from:'FIV', to:'FL_DES', vol:900000, type:'curr' },
+  { from:'FIV', to:'FL_MKT', vol:700000, type:'curr' },
+  { from:'FIV', to:'FL_DEV', vol:500000, type:'curr' },
+
+  // → CrewBoard
+  { from:'ENT',  to:'CB', vol:380000,  type:'web3' },
+  { from:'SMB',  to:'CB', vol:280000,  type:'web3' },
+  { from:'STUP', to:'CB', vol:150000,  type:'web3' },
+  { from:'DAO',  to:'CB', vol:120000,  type:'web3' },
+
+  // CrewBoard → Freelancers (near full amount)
+  { from:'CB', to:'FL_W3',  vol:310000, type:'web3' },
+  { from:'CB', to:'FL_DEV', vol:240000, type:'web3' },
+  { from:'CB', to:'FL_DES', vol:140000, type:'web3' },
+  { from:'CB', to:'FL_DAT', vol:120000, type:'web3' },
+  { from:'CB', to:'FL_MKT', vol:80000,  type:'web3' },
+];
+
+// ── Layout ────────────────────────────────────────────────────────────────────
+function layout() {
+  const W = canvas.width, H = canvas.height;
+  const topBar = 80, botBar = 180;
+  const drawH = H - topBar - botBar;
+  const midY  = topBar + drawH / 2;
+
+  // Columns
+  const xC  = W * 0.14;   // clients
+  const xPL = W * 0.36;   // platforms (upwork/fiverr)
+  const xCB = W * 0.58;   // crewboard
+  const xFL = W * 0.80;   // freelancers
+
+  // Clients
+  const cls = nodes.filter(n=>n.type==='client');
+  const cSp = Math.min(80, drawH / cls.length);
+  cls.forEach((n,i) => { n.x=xC; n.y=midY-(cls.length-1)*cSp/2+i*cSp; });
+
+  // Platforms
+  const plts = nodes.filter(n=>n.type==='platform');
+  const pSp  = Math.min(120, drawH / plts.length);
+  plts.forEach((n,i) => { n.x=xPL; n.y=midY-(plts.length-1)*pSp/2+i*pSp; });
+
+  // CrewBoard
+  nodes.find(n=>n.id==='CB').x = xCB;
+  nodes.find(n=>n.id==='CB').y = midY;
+
+  // Freelancers
+  const fls = nodes.filter(n=>n.type==='fl');
+  const fSp  = Math.min(72, drawH / fls.length);
+  fls.forEach((n,i) => { n.x=xFL; n.y=midY-(fls.length-1)*fSp/2+i*fSp; });
+}
+
+function getNode(id) { return nodes.find(n=>n.id===id); }
+function nColor(n) {
+  if (n.id==='CB') return COL.cb;
+  if (n.cat==='upwork') return COL.upwork;
+  if (n.cat==='fiverr') return COL.fiverr;
+  return COL[n.cat] || '#4af0c8';
+}
+function fColor(f) {
+  if (f.type==='web3') return COL.cb;
+  const fn = getNode(f.from);
+  return nColor(fn);
+}
+
+// ── Particles ─────────────────────────────────────────────────────────────────
+let particles = [];
+let hNode=null, hFlow=null;
+
+class Particle {
+  constructor(flow) { this.flow=flow; this.reset(); }
+  reset() {
+    this.t = Math.random();
+    this.speed = this.flow.type==='web3'
+      ? 0.005 + Math.random()*0.006   // web3: fast
+      : 0.002 + Math.random()*0.003;  // current: slow
+    this.size = 1.4+Math.random()*2;
+    this.trail = [];
+  }
+  update() {
+    this.t += this.speed;
+    if (this.t > 1.1) this.reset();
+    const a = this.t<0.08 ? this.t/0.08 : this.t>0.92 ? (1-this.t)/0.08 : 1;
+    const p = this.pos(this.t);
+    this.trail.push({...p, a});
+    if (this.trail.length > 10) this.trail.shift();
+  }
+  pos(t) {
+    const fn=getNode(this.flow.from), tn=getNode(this.flow.to);
+    if(!fn||!tn) return {x:0,y:0};
+    const dx=tn.x-fn.x, dy=tn.y-fn.y;
+    const c = this.flow.type==='web3' ? 0.28 : 0.10;
+    const cp1x=fn.x+dx*0.35+dy*c, cp1y=fn.y+dy*0.12-dx*c;
+    const cp2x=fn.x+dx*0.65+dy*c, cp2y=fn.y+dy*0.88-dx*c;
+    const mt=1-t;
+    return {
+      x: mt*mt*mt*fn.x+3*mt*mt*t*cp1x+3*mt*t*t*cp2x+t*t*t*tn.x,
+      y: mt*mt*mt*fn.y+3*mt*mt*t*cp1y+3*mt*t*t*cp2y+t*t*t*tn.y
+    };
+  }
+}
+
+function spawnParticles() {
+  particles = [];
+  const maxV = Math.max(...flows.map(f=>f.vol));
+  flows.forEach(flow => {
+    const cnt = Math.ceil((flow.vol/maxV)*26)+1;
+    for(let i=0;i<cnt;i++){
+      const p=new Particle(flow); p.t=i/cnt; particles.push(p);
+    }
+  });
+}
+
+// ── Draw path ─────────────────────────────────────────────────────────────────
+function drawPath(flow, hl) {
+  const fn=getNode(flow.from), tn=getNode(flow.to);
+  if(!fn||!tn) return;
+  const col=fColor(flow);
+  const maxV=Math.max(...flows.map(f=>f.vol));
+  const w=0.7+(flow.vol/maxV)*8;
+  const dx=tn.x-fn.x, dy=tn.y-fn.y, c=flow.type==='web3'?0.28:0.10;
+  const cp1x=fn.x+dx*0.35+dy*c, cp1y=fn.y+dy*0.12-dx*c;
+  const cp2x=fn.x+dx*0.65+dy*c, cp2y=fn.y+dy*0.88-dx*c;
+  ctx.beginPath(); ctx.moveTo(fn.x,fn.y);
+  ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,tn.x,tn.y);
+  ctx.strokeStyle=col;
+  ctx.lineWidth = hl ? w+2 : w*0.4;
+  ctx.globalAlpha = hl ? 0.85 : (flow.type==='web3'?0.15:0.09);
+  if(hl){ctx.shadowColor=col;ctx.shadowBlur=16;}
+  ctx.stroke(); ctx.shadowBlur=0; ctx.globalAlpha=1;
+}
+
+function drawParticles() {
+  particles.forEach(p=>{
+    const col=fColor(p.flow);
+    const hl=hFlow===p.flow||hNode?.id===p.flow.from||hNode?.id===p.flow.to;
+    for(let i=1;i<p.trail.length;i++){
+      const a=p.trail[i-1], b=p.trail[i];
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle=col;
+      ctx.lineWidth=p.size*(i/p.trail.length)*(hl?2.2:1);
+      ctx.globalAlpha=b.a*(i/p.trail.length)*(hl?0.95:0.6);
+      ctx.stroke();
+    }
+    const h=p.trail[p.trail.length-1];
+    if(h){
+      ctx.beginPath(); ctx.arc(h.x,h.y,p.size*(hl?1.8:1.2),0,Math.PI*2);
+      ctx.fillStyle=p.flow.type==='web3'?col:'#fff';
+      ctx.globalAlpha=h.a*(hl?0.95:0.75);
+      if(hl){ctx.shadowColor=col;ctx.shadowBlur=10;}
+      ctx.fill(); ctx.shadowBlur=0;
+    }
+    ctx.globalAlpha=1;
+  });
+}
+
+// ── Fee drain (red drip from platform) ───────────────────────────────────────
+function drawFeeDrain(node) {
+  const pulse=(Math.sin(tick*0.05)+1)*0.5;
+  // downward fee stream
+  for(let i=0;i<5;i++){
+    const t2=((tick*0.018+i*0.2)%1);
+    const x=node.x+(Math.sin(i*1.4)*node.r*0.4);
+    const y0=node.y+node.r;
+    const y1=node.y+node.r*2.5+t2*60;
+    ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x+Math.sin(t2*6)*4, y1);
+    ctx.strokeStyle=COL.fee;
+    ctx.lineWidth=1+i*0.3;
+    ctx.globalAlpha=0.4*(1-t2)*pulse;
+    ctx.stroke();
+    // drip bead
+    ctx.beginPath(); ctx.arc(x+Math.sin(t2*6)*4, y1, 2, 0, Math.PI*2);
+    ctx.fillStyle=COL.fee; ctx.globalAlpha=0.3*(1-t2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  // fee label
+  ctx.fillStyle=COL.fee; ctx.globalAlpha=0.8;
+  ctx.font='bold 9px Courier New'; ctx.textAlign='center';
+  ctx.fillText(`-${Math.round(node.fee*100)}% FEE`, node.x, node.y+node.r+22);
+  ctx.globalAlpha=1;
+}
+
+// ── Draw node ─────────────────────────────────────────────────────────────────
+let tick=0;
+function drawNode(n) {
+  const col=nColor(n);
+  const isHov=hNode===n;
+  const isRel=hNode&&flows.some(f=>(f.from===hNode.id&&f.to===n.id)||(f.to===hNode.id&&f.from===n.id));
+  const pulse=Math.sin(tick*0.04+n.x*0.01)*0.5+0.5;
+  const r=n.r*(isHov?1.14:1);
+
+  // CrewBoard glow halo
+  if(n.type==='crewboard'){
+    const s=SCENARIOS[activeScenario];
+    const g=ctx.createRadialGradient(n.x,n.y,r*0.2,n.x,n.y,r*4);
+    g.addColorStop(0,s.col+'25'); g.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.arc(n.x,n.y,r*4,0,Math.PI*2);
+    ctx.fillStyle=g; ctx.fill();
+  }
+
+  // Outer glow
+  const og=ctx.createRadialGradient(n.x,n.y,r*0.4,n.x,n.y,r*2.6);
+  og.addColorStop(0,col+'22'); og.addColorStop(1,'transparent');
+  ctx.beginPath(); ctx.arc(n.x,n.y,r*2.6,0,Math.PI*2);
+  ctx.fillStyle=og; ctx.fill();
+
+  // Pulse ring
+  if(isHov||isRel||n.type==='crewboard'){
+    ctx.beginPath(); ctx.arc(n.x,n.y,r+5+pulse*6,0,Math.PI*2);
+    ctx.strokeStyle=col; ctx.lineWidth=1;
+    ctx.globalAlpha=0.2*(1-pulse*0.5); ctx.stroke(); ctx.globalAlpha=1;
+  }
+
+  // Fill
+  const bg=ctx.createRadialGradient(n.x-r*0.3,n.y-r*0.3,0,n.x,n.y,r);
+  bg.addColorStop(0,col+'25'); bg.addColorStop(1,'#04081088');
+  ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2);
+  ctx.fillStyle=bg; ctx.fill();
+
+  // Border
+  ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2);
+  ctx.strokeStyle=col; ctx.lineWidth=isHov?2:1.2;
+  ctx.globalAlpha=isHov?1:0.65;
+  if(isHov){ctx.shadowColor=col;ctx.shadowBlur=20;}
+  ctx.stroke(); ctx.shadowBlur=0; ctx.globalAlpha=1;
+
+  // Icon
+  const icons={
+    ENT:'🏢',SMB:'💼',STUP:'🚀',DAO:'⬡',
+    UPW:'UP',FIV:'FVR',
+    CB:'⬡',
+    FL_DEV:'</>',FL_DES:'✦',FL_MKT:'📢',FL_DAT:'⬡',FL_W3:'◈'
+  };
+  ctx.fillStyle=isHov?'#fff':col; ctx.globalAlpha=1;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  if(n.id==='CB'){
+    ctx.font=`bold ${Math.max(10,r*0.38)}px Courier New`;
+    ctx.fillText('CREW', n.x, n.y-6);
+    ctx.fillText('BOARD', n.x, n.y+7);
+  } else {
+    ctx.font=`${Math.max(9,r*0.44)}px Courier New`;
+    ctx.fillText(icons[n.id]||n.id, n.x, n.y);
+  }
+
+  // Label
+  ctx.fillStyle=isHov?'#fff':'#c8d8e8'; ctx.globalAlpha=isHov?1:0.9;
+  ctx.font=`${Math.max(8,r*0.28)}px Courier New`;
+  ctx.textBaseline='top';
+  ctx.fillText(n.label, n.x, n.y+r+3);
+  ctx.globalAlpha=1;
+
+  if(n.type==='platform') drawFeeDrain(n);
+}
+
+// ── Column labels on canvas ────────────────────────────────────────────────────
+function drawColLabel(x, y, text, col) {
+  ctx.fillStyle=col||'rgba(200,216,240,0.75)';
+  ctx.font='9px Courier New'; ctx.textAlign='center';
+  ctx.fillText(text, x, y);
+}
+
+// ── Grid ──────────────────────────────────────────────────────────────────────
+function drawGrid() {
+  ctx.strokeStyle='rgba(74,138,200,0.025)'; ctx.lineWidth=1;
+  for(let x=0;x<canvas.width;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}
+  for(let y=0;y<canvas.height;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}
+}
+
+// ── Vertical divider ─────────────────────────────────────────────────────────
+function drawDivider() {
+  const x = canvas.width * 0.47;
+  ctx.setLineDash([3,9]); ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(160,240,74,0.1)';
+  ctx.beginPath(); ctx.moveTo(x,80); ctx.lineTo(x,canvas.height-180); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(160,240,74,0.3)'; ctx.font='8px Courier New'; ctx.textAlign='center';
+  ctx.fillText('← LEGACY          WEB3 →', x, 88);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+let animating = true;
+function render() {
+  if(!animating){requestAnimationFrame(render);return;}
+  tick++;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawGrid();
+  drawDivider();
+
+  const W=canvas.width, H=canvas.height;
+  const topBar=80, botBar=180, drawH=H-topBar-botBar;
+  const midY=topBar+drawH/2;
+
+  drawColLabel(W*0.14,  topBar+14, T('col-clients'));
+  drawColLabel(W*0.36,  topBar+14, T('col-platform'), 'rgba(255,107,74,0.5)');
+  drawColLabel(W*0.58,  topBar+14, T('col-cb'), 'rgba(160,240,74,0.7)');
+  drawColLabel(W*0.80,  topBar+14, T('col-fl'));
+
+  flows.forEach(f=>drawPath(f,false));
+  if(hFlow) drawPath(hFlow,true);
+  particles.forEach(p=>p.update());
+  drawParticles();
+  nodes.forEach(n=>drawNode(n));
+
+  requestAnimationFrame(render);
+}
+
+// ── Interaction ───────────────────────────────────────────────────────────────
+function getNodeAt(mx,my){return nodes.find(n=>Math.hypot(mx-n.x,my-n.y)<n.r+8);}
+function getFlowAt(mx,my){
+  let cl=null,md=16;
+  flows.forEach(f=>{
+    const fn=getNode(f.from),tn=getNode(f.to);
+    if(!fn||!tn) return;
+    for(let i=0;i<=22;i++){
+      const t=i/22,dx=tn.x-fn.x,dy=tn.y-fn.y,c=f.type==='web3'?0.28:0.10;
+      const cp1x=fn.x+dx*0.35+dy*c,cp1y=fn.y+dy*0.12-dx*c;
+      const cp2x=fn.x+dx*0.65+dy*c,cp2y=fn.y+dy*0.88-dx*c;
+      const mt=1-t;
+      const x=mt*mt*mt*fn.x+3*mt*mt*t*cp1x+3*mt*t*t*cp2x+t*t*t*tn.x;
+      const y=mt*mt*mt*fn.y+3*mt*mt*t*cp1y+3*mt*t*t*cp2y+t*t*t*tn.y;
+      const d=Math.hypot(mx-x,my-y);
+      if(d<md){md=d;cl=f;}
+    }
+  });
+  return cl;
+}
+
+canvas.addEventListener('mousemove',e=>{
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+  hNode=getNodeAt(mx,my); hFlow=hNode?null:getFlowAt(mx,my);
+  const tt=document.getElementById('tooltip');
+  const fmt=v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v;
+
+  if(hFlow){
+    const fn=getNode(hFlow.from),tn=getNode(hFlow.to);
+    const fee=Math.round(hFlow.vol*(fn?.fee||0));
+    const col=hFlow.type==='web3'?COL.cb:fColor(hFlow);
+    document.getElementById('tt-t').textContent=hFlow.type==='web3'?T('tt-web3-flow'):T('tt-legacy-flow');
+    document.getElementById('tt-t').style.color=col;
+    document.getElementById('tt-type').textContent=`${fn?.label} → ${tn?.label}`;
+    document.getElementById('tt-vol').textContent=fmt(hFlow.vol)+T('tt-day');
+    document.getElementById('tt-fee').textContent=hFlow.type==='web3'?`8.5% → ${fmt(Math.round(hFlow.vol*0.085))}`:`${Math.round((fn?.fee||0)*100)}% → ${fmt(fee)}`;
+    document.getElementById('tt-net').textContent=fmt(hFlow.vol-fee)+T('tt-day');
+    document.getElementById('tt-settle').textContent=hFlow.type==='web3'?T('tt-onchain'):T('tt-legacy-days');
+    tt.style.display='block'; tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-10)+'px';
+  } else if(hNode){
+    const col=nColor(hNode);
+    document.getElementById('tt-t').textContent=hNode.label.toUpperCase();
+    document.getElementById('tt-t').style.color=col;
+    document.getElementById('tt-type').textContent=hNode.type==='crewboard'?T('type-crewboard'):hNode.type.toUpperCase();
+    document.getElementById('tt-vol').textContent=fmt(hNode.vol)+T('tt-day');
+    document.getElementById('tt-fee').textContent=hNode.fee?`${Math.round(hNode.fee*100)}% (${fmt(Math.round(hNode.vol*hNode.fee))}${T('tt-day')})`:T('tt-none');
+    document.getElementById('tt-net').textContent=hNode.fee?fmt(Math.round(hNode.vol*(1-hNode.fee)))+T('tt-day'):'—';
+    document.getElementById('tt-settle').textContent=hNode.settle||'—';
+    tt.style.display='block'; tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-10)+'px';
+  } else { tt.style.display='none'; }
+});
+canvas.addEventListener('mouseleave',()=>{hNode=null;hFlow=null;document.getElementById('tooltip').style.display='none';});
+
+// ── Node detail panel on click ─────────────────────────────────────────────
+function openNodePanel(n) {
+  const col = nColor(n);
+  const fmt = v => v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v;
+  const typeLabels = { client:T('type-client'), platform:T('type-platform'), crewboard:T('type-crewboard'), fl:T('type-fl') };
+
+  document.getElementById('np-title').textContent = n.label.toUpperCase();
+  document.getElementById('np-title').style.color = col;
+  document.getElementById('np-type').textContent = typeLabels[n.type] || n.type.toUpperCase();
+
+  let rows = `<div class="np-row"><span class="np-lbl">${T('np-vol')}</span><span style="color:${col}">${fmt(n.vol)}</span></div>`;
+  if (n.fee) rows += `<div class="np-row"><span class="np-lbl">${T('np-fee')}</span><span style="color:#ff6b4a">${Math.round(n.fee*100)}%</span></div>`;
+  if (n.fee) rows += `<div class="np-row"><span class="np-lbl">${T('np-feeday')}</span><span style="color:#ff6b4a">-${fmt(Math.round(n.vol*n.fee))}</span></div>`;
+  if (n.fee) rows += `<div class="np-row"><span class="np-lbl">${T('np-net')}</span><span style="color:#a0f04a">${fmt(Math.round(n.vol*(1-n.fee)))}</span></div>`;
+  if (n.settle) rows += `<div class="np-row"><span class="np-lbl">${T('np-settle')}</span><span>${n.settle}</span></div>`;
+
+  // Inbound/outbound flow summary
+  const inVol = flows.filter(f=>f.to===n.id).reduce((s,f)=>s+f.vol,0);
+  const outVol = flows.filter(f=>f.from===n.id).reduce((s,f)=>s+f.vol,0);
+  if (inVol) rows += `<div class="np-row"><span class="np-lbl">${T('np-in')}</span><span>${fmt(inVol)}</span></div>`;
+  if (outVol) rows += `<div class="np-row"><span class="np-lbl">${T('np-out')}</span><span>${fmt(outVol)}</span></div>`;
+
+  document.getElementById('np-rows').innerHTML = rows;
+  document.getElementById('np-desc').textContent = T('node-' + n.id) || '';
+  document.getElementById('node-panel').style.borderColor = col+'44';
+  document.getElementById('node-panel').style.display = 'block';
+}
+
+function closeNodePanel() {
+  document.getElementById('node-panel').style.display = 'none';
+}
+
+canvas.addEventListener('click', e => {
+  const r = canvas.getBoundingClientRect();
+  const n = getNodeAt(e.clientX - r.left, e.clientY - r.top);
+  if (n) openNodePanel(n);
+  else closeNodePanel();
+});
+
+// ── Live ticks ────────────────────────────────────────────────────────────────
+setInterval(()=>{
+  if(!animating) return;
+  flows.forEach(f=>{
+    f.vol+=Math.floor((Math.random()-0.44)*f.vol*0.012);
+    f.vol=Math.max(5000,f.vol);
+  });
+  const upw=flows.filter(f=>f.to==='UPW').reduce((s,f)=>s+f.vol,0);
+  const fiv=flows.filter(f=>f.to==='FIV').reduce((s,f)=>s+f.vol,0);
+  const fees=Math.round(upw*0.15+fiv*0.20);
+  const cbv=flows.filter(f=>f.to==='CB').reduce((s,f)=>s+f.vol,0);
+  const fmt=v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':'$'+(v/1e3).toFixed(0)+'K';
+  document.getElementById('t-upwork').textContent=fmt(upw);
+  document.getElementById('t-fiverr').textContent=fmt(fiv);
+  document.getElementById('t-fees').textContent='-'+fmt(fees);
+  document.getElementById('b-upw').textContent=fmt(upw);
+  document.getElementById('b-fiv').textContent=fmt(fiv);
+  document.getElementById('b-ufee').textContent='-'+fmt(Math.round(upw*0.15));
+  document.getElementById('b-ffee').textContent='-'+fmt(Math.round(fiv*0.20));
+  document.getElementById('b-lost').textContent='-'+fmt(fees);
+}, 2000);
+
+// ── Resize ────────────────────────────────────────────────────────────────────
+function resize(){
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  layout(); spawnParticles();
+}
+window.addEventListener('resize',resize);
+resize();
+render();
+</script>
+</body>
+</html>
