@@ -538,12 +538,53 @@ function layout(){
 }
 
 function applyMobileStyles(){
-  const mob=isMob();
-  // Ensure explainer & tagline are hidden via JS as well (belt + suspenders)
-  document.getElementById('explainer').style.display=mob?'none':'';
+  const mob=window.innerWidth<768;
+
+  // ── Header ──
+  const hdr=document.getElementById('header');
+  hdr.style.height=mob?'48px':'';
+  hdr.style.padding=mob?'0 12px':'';
   document.querySelector('.tagline').style.display=mob?'none':'';
-  // #sc-label hidden on mobile
-  document.getElementById('sc-label').style.display=mob?'none':'';
+  document.querySelectorAll('.lang-btn').forEach(b=>{b.style.fontSize=mob?'14px':'';b.style.padding=mob?'2px 3px':'';});
+  const blink=document.querySelector('.tick-blink');
+  if(blink)blink.style.fontSize=mob?'9px':'';
+
+  // ── Ticker ──
+  const ticker=document.getElementById('ticker');
+  if(mob){ticker.style.top='48px';ticker.style.height='26px';ticker.style.overflowX='auto';}
+  else{ticker.style.top='';ticker.style.height='';ticker.style.overflowX='';}
+  document.querySelectorAll('.tick-item').forEach(t=>{t.style.fontSize=mob?'10px':'';t.style.padding=mob?'0 10px':'';});
+
+  // ── Scenarios → horizontal bar on mobile ──
+  const sc=document.getElementById('scenarios');
+  if(mob){
+    sc.style.cssText='position:absolute;top:74px;left:0;right:0;width:100%;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:5px;padding:0 10px;height:28px;background:rgba(255,255,255,0.97);border-bottom:1px solid #e8ecf2;z-index:18;';
+    document.querySelectorAll('.sc-btn').forEach(b=>{b.style.fontSize='8px';b.style.padding='3px 12px';b.style.textAlign='center';});
+    document.getElementById('sc-label').style.display='none';
+  } else {
+    sc.style.cssText='';
+    document.querySelectorAll('.sc-btn').forEach(b=>{b.style.fontSize='';b.style.padding='';b.style.textAlign='';});
+    document.getElementById('sc-label').style.display='';
+  }
+
+  // ── Explainer → hide on mobile ──
+  document.getElementById('explainer').style.display=mob?'none':'';
+
+  // ── Bottom panel ──
+  const bot=document.getElementById('bottom');
+  if(mob){bot.style.height='130px';bot.style.overflowX='auto';bot.style.flexWrap='nowrap';}
+  else{bot.style.height='';bot.style.overflowX='';bot.style.flexWrap='';}
+  document.querySelectorAll('.b-panel').forEach(p=>{
+    if(mob){p.style.minWidth='170px';p.style.flex='0 0 170px';p.style.padding='8px 10px';}
+    else{p.style.minWidth='';p.style.flex='';p.style.padding='';}
+  });
+  document.querySelectorAll('.b-big').forEach(el=>{el.style.fontSize=mob?'18px':'';});
+  document.querySelectorAll('.b-title').forEach(el=>{el.style.fontSize=mob?'8px':'';el.style.letterSpacing=mob?'1px':'';});
+
+  // ── Node panel ──
+  const np=document.getElementById('node-panel');
+  if(mob){np.style.width='calc(100vw - 20px)';np.style.left='10px';np.style.right='10px';np.style.top='auto';np.style.bottom='140px';np.style.fontSize='10px';}
+  else{np.style.width='';np.style.left='';np.style.right='';np.style.top='';np.style.bottom='';np.style.fontSize='';}
 }
 
 class Particle{
@@ -878,6 +919,8 @@ setInterval(()=>{
 
 function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;applyMobileStyles();layout();spawnParticles();}
 window.addEventListener('resize',resize);
+// Apply mobile styles immediately on load (before first render, bypasses CSS cache)
+applyMobileStyles();
 resize();render();
 </script>
 </body>
