@@ -188,26 +188,38 @@ canvas { display:block; }
 
 /* ── Mobile ── */
 @media (max-width:768px){
-  .tagline { display:none; }
+  .tagline { display:none !important; }
   #header { height:48px; padding:0 12px; }
   .logo { font-size:16px; letter-spacing:2px; }
-  .lang-btn { font-size:15px; padding:2px 4px; }
-  #ticker { top:48px; height:26px; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; }
+  .lang-btn { font-size:14px; padding:2px 3px; }
+  .tick-blink { font-size:9px !important; }
+  #ticker { top:48px; height:26px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .tick-item { font-size:10px; padding:0 10px; white-space:nowrap; }
+  /* Scenario buttons: horizontal strip below ticker */
+  #scenarios {
+    top:74px; left:0; right:0; width:100%;
+    flex-direction:row; justify-content:center; align-items:center;
+    gap:5px; padding:0 10px; height:28px;
+    background:rgba(255,255,255,0.97);
+    border-bottom:1px solid #e8ecf2;
+    z-index:18;
+  }
+  .sc-btn { font-size:8px; padding:3px 12px; text-align:center; }
+  #sc-label { display:none; }
+  #explainer { display:none !important; }
   #bottom { height:130px; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
-  .b-panel { min-width:175px; flex:0 0 175px; padding:8px 10px; }
+  .b-panel { min-width:170px; flex:0 0 170px; padding:8px 10px; }
   .b-big { font-size:18px; margin-bottom:2px; }
   .b-title { font-size:8px; letter-spacing:1px; }
   .b-sub { font-size:9px; margin-bottom:4px; }
   .b-row { font-size:9px; }
   .b-lbl { font-size:9px; }
   .proj-label { font-size:9px; }
-  #explainer { display:none; }
-  #scenarios { top:74px; right:6px; gap:4px; }
-  .sc-btn { font-size:7px; padding:4px 8px; }
-  #sc-label { font-size:6px; }
-  #node-panel { width:240px; right:6px; font-size:10px; }
-  #tooltip { font-size:9px; min-width:170px; }
+  #node-panel {
+    width:calc(100vw - 20px); left:10px; right:10px;
+    top:auto; bottom:140px; font-size:10px; max-height:45vh; overflow-y:auto;
+  }
+  #tooltip { font-size:9px; min-width:160px; max-width:200px; }
 }
 </style>
 </head>
@@ -504,13 +516,17 @@ function fColor(f){
 function getNode(id){return nodes.find(n=>n.id===id);}
 
 function isMob(){return window.innerWidth<768;}
+// header(48) + ticker(26) + scenarios-bar(28) = 102px on mobile
+function mobTopBar(){return isMob()?102:84;}
+function mobBotBar(){return isMob()?130:185;}
 function layout(){
   const mob=isMob();
   const W=canvas.width,H=canvas.height;
-  const topBar=mob?74:84,botBar=mob?130:185,drawH=H-topBar-botBar;
+  const topBar=mobTopBar(),botBar=mobBotBar(),drawH=H-topBar-botBar;
   const midY=topBar+drawH/2;
-  const xC=W*(mob?0.18:0.20),xPL=W*(mob?0.38:0.40),xCB=W*(mob?0.60:0.60),xFL=W*(mob?0.82:0.80);
-  const clsSp=mob?58:85,pltSp=mob?110:150,flSp=mob?48:62;
+  // Mobile: 4 columns spread across full width, tighter
+  const xC=W*(mob?0.13:0.20),xPL=W*(mob?0.36:0.40),xCB=W*(mob?0.60:0.60),xFL=W*(mob?0.85:0.80);
+  const clsSp=mob?54:85,pltSp=mob?106:150,flSp=mob?44:62;
   const cls=nodes.filter(n=>n.type==='client');
   cls.forEach((n,i)=>{n.x=xC;n.y=midY-(cls.length-1)*clsSp/2+i*clsSp;});
   const plts=nodes.filter(n=>n.type==='platform');
@@ -519,6 +535,15 @@ function layout(){
   nodes.find(n=>n.id==='CB').y=midY;
   const fls=nodes.filter(n=>n.type==='fl');
   fls.forEach((n,i)=>{n.x=xFL;n.y=midY-(fls.length-1)*flSp/2+i*flSp;});
+}
+
+function applyMobileStyles(){
+  const mob=isMob();
+  // Ensure explainer & tagline are hidden via JS as well (belt + suspenders)
+  document.getElementById('explainer').style.display=mob?'none':'';
+  document.querySelector('.tagline').style.display=mob?'none':'';
+  // #sc-label hidden on mobile
+  document.getElementById('sc-label').style.display=mob?'none':'';
 }
 
 class Particle{
@@ -590,7 +615,7 @@ function drawParticles(){
 }
 
 function drawFeeDrain(node){
-  const sc=isMob()?0.62:1;
+  const sc=isMob()?0.58:1;
   const nr=node.r*sc;
   const pulse=(Math.sin(tick*0.05)+1)*0.5;
   for(let i=0;i<5;i++){
@@ -614,7 +639,7 @@ function drawNode(n){
   const isHov=hNode===n;
   const isRel=hNode&&flows.some(f=>(f.from===hNode.id&&f.to===n.id)||(f.to===hNode.id&&f.from===n.id));
   const pulse=Math.sin(tick*0.04+n.x*0.01)*0.5+0.5;
-  const scale=isMob()?0.62:1;
+  const scale=isMob()?0.58:1;
   const r=n.r*scale*(isHov?1.14:1);
 
   // CB glow
@@ -685,13 +710,15 @@ function drawColLabel(x,y,text,col){
 
 function drawDivider(){
   const mob=isMob();
-  const topBar=mob?74:84,botBar=mob?130:185;
+  const topBar=mobTopBar(),botBar=mobBotBar();
   const x=canvas.width*0.50;
   ctx.setLineDash([3,8]);ctx.lineWidth=1;ctx.strokeStyle='rgba(37,99,235,0.12)';
   ctx.beginPath();ctx.moveTo(x,topBar);ctx.lineTo(x,canvas.height-botBar);ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle='rgba(37,99,235,0.35)';ctx.font='bold 8px Space Grotesk';ctx.textAlign='center';
-  ctx.fillText('← LEGACY          WEB3 →',x,topBar+8);
+  if(!mob){
+    ctx.fillStyle='rgba(37,99,235,0.35)';ctx.font='bold 8px Space Grotesk';ctx.textAlign='center';
+    ctx.fillText('← LEGACY          WEB3 →',x,topBar+8);
+  }
 }
 
 function drawGrid(){
@@ -710,13 +737,13 @@ function render(){
 
   drawGrid();drawDivider();
   const mob=isMob();
-  const W=canvas.width,H=canvas.height,topBar=mob?74:84,botBar=mob?130:185;
+  const W=canvas.width,H=canvas.height,topBar=mobTopBar(),botBar=mobBotBar();
   const lt=T[activeLang];
-  const xC=W*(mob?0.18:0.20),xPL=W*(mob?0.38:0.40),xCB=W*(mob?0.60:0.60),xFL=W*(mob?0.82:0.80);
-  drawColLabel(xC,topBar+16,lt.colC);
-  drawColLabel(xPL,topBar+16,lt.colL,'rgba(232,67,46,0.5)');
-  drawColLabel(xCB,topBar+16,lt.colCB,'rgba(29,185,84,0.8)');
-  drawColLabel(xFL,topBar+16,lt.colF);
+  const xC=W*(mob?0.13:0.20),xPL=W*(mob?0.36:0.40),xCB=W*(mob?0.60:0.60),xFL=W*(mob?0.85:0.80);
+  drawColLabel(xC,topBar+14,lt.colC);
+  drawColLabel(xPL,topBar+14,lt.colL,'rgba(232,67,46,0.5)');
+  drawColLabel(xCB,topBar+14,lt.colCB,'rgba(29,185,84,0.8)');
+  drawColLabel(xFL,topBar+14,lt.colF);
 
   flows.forEach(f=>drawPath(f,false));
   if(hFlow)drawPath(hFlow,true);
@@ -726,7 +753,7 @@ function render(){
   requestAnimationFrame(render);
 }
 
-function getNodeAt(mx,my){const sc=isMob()?0.62:1;return nodes.find(n=>Math.hypot(mx-n.x,my-n.y)<n.r*sc+8);}
+function getNodeAt(mx,my){const sc=isMob()?0.58:1;return nodes.find(n=>Math.hypot(mx-n.x,my-n.y)<n.r*sc+8);}
 function getFlowAt(mx,my){
   let cl=null,md=16;
   flows.forEach(f=>{
@@ -849,7 +876,7 @@ setInterval(()=>{
   document.getElementById('b-lost').textContent='-'+fmt(fees);
 },2000);
 
-function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;layout();spawnParticles();}
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;applyMobileStyles();layout();spawnParticles();}
 window.addEventListener('resize',resize);
 resize();render();
 </script>
