@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CrewBoard — Light Mockup</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>CrewBoard — Flow Viz v5</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -185,22 +188,58 @@ canvas { display:block; }
 .tt-red { color:#e84a2e; font-weight:600; }
 .tt-green { color:#1db954; font-weight:600; }
 .tt-blue { color:#2563eb; font-weight:600; }
+
+/* ── Mobile ── */
+@media (max-width:768px){
+  .tagline { display:none !important; }
+  #header { height:48px; padding:0 12px; }
+  .logo { font-size:16px; letter-spacing:2px; }
+  .lang-btn { font-size:14px; padding:2px 3px; }
+  .tick-blink { font-size:9px !important; }
+  #ticker { top:48px; height:26px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tick-item { font-size:10px; padding:0 10px; white-space:nowrap; }
+  /* Scenario buttons: horizontal strip below ticker */
+  #scenarios {
+    top:74px; left:0; right:0; width:100%;
+    flex-direction:row; justify-content:center; align-items:center;
+    gap:5px; padding:0 10px; height:28px;
+    background:rgba(255,255,255,0.97);
+    border-bottom:1px solid #e8ecf2;
+    z-index:18;
+  }
+  .sc-btn { font-size:8px; padding:3px 12px; text-align:center; }
+  #sc-label { display:none; }
+  #explainer { display:none !important; }
+  #bottom { height:130px; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
+  .b-panel { min-width:170px; flex:0 0 170px; padding:8px 10px; }
+  .b-big { font-size:18px; margin-bottom:2px; }
+  .b-title { font-size:8px; letter-spacing:1px; }
+  .b-sub { font-size:9px; margin-bottom:4px; }
+  .b-row { font-size:9px; }
+  .b-lbl { font-size:9px; }
+  .proj-label { font-size:9px; }
+  #node-panel {
+    width:calc(100vw - 20px); left:10px; right:10px;
+    top:auto; bottom:140px; font-size:10px; max-height:45vh; overflow-y:auto;
+  }
+  #tooltip { font-size:9px; min-width:160px; max-width:200px; }
+}
 </style>
 </head>
 <body>
 
 <div id="header">
   <div class="logo">CREW<span>BOARD</span></div>
-  <div class="tagline">WEB3 FREELANCE MARKETPLACE — MARKET OPPORTUNITY ANALYSIS</div>
+  <div class="tagline" id="tagline">WEB3 FREELANCE MARKETPLACE — MARKET OPPORTUNITY ANALYSIS</div>
   <div style="display:flex;align-items:center;gap:14px;">
     <div class="lang-switcher">
-      <button class="lang-btn active" title="Deutsch" onclick="this.closest('.lang-switcher').querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">🇩🇪</button>
-      <button class="lang-btn" title="English" onclick="this.closest('.lang-switcher').querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">🇬🇧</button>
-      <button class="lang-btn" title="Español" onclick="this.closest('.lang-switcher').querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">🇪🇸</button>
-      <button class="lang-btn" title="Français" onclick="this.closest('.lang-switcher').querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">🇫🇷</button>
-      <button class="lang-btn" title="Português" onclick="this.closest('.lang-switcher').querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">🇧🇷</button>
+      <button class="lang-btn" title="Deutsch" onclick="setLang('DE',this)">🇩🇪</button>
+      <button class="lang-btn active" title="English" onclick="setLang('EN',this)">🇬🇧</button>
+      <button class="lang-btn" title="Español" onclick="setLang('ES',this)">🇪🇸</button>
+      <button class="lang-btn" title="Français" onclick="setLang('FR',this)">🇫🇷</button>
+      <button class="lang-btn" title="Português" onclick="setLang('PT',this)">🇧🇷</button>
     </div>
-    <span class="tick-blink" style="font-size:10px;">● ANALYSIS ACTIVE</span>
+    <span class="tick-blink" style="font-size:10px;" id="analysis-active">● ANALYSIS ACTIVE</span>
   </div>
 </div>
 
@@ -222,14 +261,14 @@ canvas { display:block; }
 </div>
 
 <div id="explainer">
-  <div style="color:#2563eb;font-size:11px;letter-spacing:2px;margin-bottom:8px;border-bottom:2px solid #dbeafe;padding-bottom:6px;font-weight:700;">WHAT THIS FLOW SHOWS</div>
-  <p>Every day, <strong style="color:#2563eb;">$13.9M</strong> flows from clients through centralized platforms to freelancers.</p>
-  <p>Upwork &amp; Fiverr pocket <strong style="color:#e84a2e;">15–20% in fees</strong> — money that never reaches the freelancer.</p>
-  <p><strong style="color:#1db954;">CrewBoard</strong> replaces this with smart contracts: only <strong style="color:#1db954;">10% fee</strong>, ~3 sec settlement, worldwide.</p>
+  <div id="exp-title" style="color:#2563eb;font-size:11px;letter-spacing:2px;margin-bottom:8px;border-bottom:2px solid #dbeafe;padding-bottom:6px;font-weight:700;">WHAT THIS FLOW SHOWS</div>
+  <p id="exp-p1">Every day, <strong style="color:#2563eb;">$13.9M</strong> flows from clients through centralized platforms to freelancers.</p>
+  <p id="exp-p2">Upwork &amp; Fiverr pocket <strong style="color:#e84a2e;">15–20% in fees</strong> — money that never reaches the freelancer.</p>
+  <p id="exp-p3"><strong style="color:#1db954;">CrewBoard</strong> replaces this with smart contracts: only <strong style="color:#1db954;">10% fee</strong>, ~3 sec settlement, worldwide.</p>
   <div style="margin-top:8px;padding-top:6px;border-top:1px solid #f0f3f7;font-size:11px;line-height:1.8;color:#5a6a85;">
-    <div>⬡ <span style="color:#1db954;font-weight:700;">Green</span> flows = CrewBoard</div>
-    <div>● <span style="color:#8a9ab5;font-weight:700;">Grey</span> flows = Legacy</div>
-    <div>▼ <span style="color:#e84a2e;font-weight:700;">Red</span> drops = Fee drain</div>
+    <div id="exp-leg1">⬡ <span style="color:#1db954;font-weight:700;">Green</span> flows = CrewBoard</div>
+    <div id="exp-leg2">● <span style="color:#8a9ab5;font-weight:700;">Grey</span> flows = Legacy</div>
+    <div id="exp-leg3">▼ <span style="color:#e84a2e;font-weight:700;">Red</span> drops = Fee drain</div>
   </div>
 </div>
 
@@ -303,6 +342,96 @@ canvas { display:block; }
 </div>
 
 <script>
+let activeLang='EN';
+const T={
+  EN:{
+    tagline:'WEB3 FREELANCE MARKETPLACE — MARKET OPPORTUNITY ANALYSIS',
+    active:'● ANALYSIS ACTIVE',
+    tl:['UPWORK / DAY','FIVERR / DAY','FEES LOST','CREWBOARD TARGET / DAY','FREELANCER SAVINGS','MARKET TAM / YEAR','WEB3 FREELANCERS GLOBAL'],
+    expTitle:'WHAT THIS FLOW SHOWS',
+    expP1:'Every day, <strong style="color:#2563eb;">$13.9M</strong> flows from clients through centralized platforms to freelancers.',
+    expP2:'Upwork &amp; Fiverr pocket <strong style="color:#e84a2e;">15–20% in fees</strong> — money that never reaches the freelancer.',
+    expP3:'<strong style="color:#1db954;">CrewBoard</strong> replaces this with smart contracts: only <strong style="color:#1db954;">10% fee</strong>, ~3 sec settlement, worldwide.',
+    leg:['⬡ <span style="color:#1db954;font-weight:700;">Green</span> flows = CrewBoard','● <span style="color:#8a9ab5;font-weight:700;">Grey</span> flows = Legacy','▼ <span style="color:#e84a2e;font-weight:700;">Red</span> drops = Fee drain'],
+    colC:'CLIENTS',colL:'LEGACY PLATF.',colCB:'CREWBOARD',colF:'FREELANCERS',
+    bt:['CENTRALIZED PLATFORMS — DAILY','CREWBOARD — WEB3 MODEL','CREWBOARD PROJECTION','CREWBOARD REVENUE (10% FEE)'],
+    nl:{ENT:'Enterprise',SMB:'SMB / Scale',STUP:'Startups',DAO:'DAOs / Web3',FL_DEV:'Developer',FL_DES:'Designer',FL_MKT:'Marketing',FL_DAT:'Data / AI',FL_W3:'Web3 Dev'},
+  },
+  DE:{
+    tagline:'WEB3 FREELANCE MARKTPLATZ — MARKTCHANCEN ANALYSE',
+    active:'● ANALYSE AKTIV',
+    tl:['UPWORK / TAG','FIVERR / TAG','VERLORENE FEES','CREWBOARD ZIEL / TAG','FREELANCER ERSPARNIS','MARKT TAM / JAHR','WEB3 FREELANCER GLOBAL'],
+    expTitle:'WAS DIESER FLOW ZEIGT',
+    expP1:'Täglich fließen <strong style="color:#2563eb;">$13,9M</strong> von Kunden über zentrale Plattformen zu Freelancern.',
+    expP2:'Upwork &amp; Fiverr kassieren <strong style="color:#e84a2e;">15–20% Fees</strong> — Geld das nie beim Freelancer ankommt.',
+    expP3:'<strong style="color:#1db954;">CrewBoard</strong> ersetzt das durch Smart Contracts: nur <strong style="color:#1db954;">10% Fee</strong>, ~3 Sek. Settlement, weltweit.',
+    leg:['⬡ <span style="color:#1db954;font-weight:700;">Grün</span> Flows = CrewBoard','● <span style="color:#8a9ab5;font-weight:700;">Grau</span> Flows = Legacy','▼ <span style="color:#e84a2e;font-weight:700;">Rot</span> Drops = Fee Verlust'],
+    colC:'KUNDEN',colL:'LEGACY PLATTF.',colCB:'CREWBOARD',colF:'FREELANCER',
+    bt:['ZENTRALE PLATTFORMEN — TÄGLICH','CREWBOARD — WEB3 MODELL','CREWBOARD PROJEKTION','CREWBOARD UMSATZ (10% FEE)'],
+    nl:{ENT:'Enterprise',SMB:'KMU / Scale',STUP:'Startups',DAO:'DAOs / Web3',FL_DEV:'Entwickler',FL_DES:'Designer',FL_MKT:'Marketing',FL_DAT:'Data / KI',FL_W3:'Web3 Dev'},
+  },
+  ES:{
+    tagline:'MARKETPLACE FREELANCE WEB3 — ANÁLISIS DE MERCADO',
+    active:'● ANÁLISIS ACTIVO',
+    tl:['UPWORK / DÍA','FIVERR / DÍA','COMISIONES PERDIDAS','OBJETIVO CREWBOARD / DÍA','AHORRO FREELANCER','TAM MERCADO / AÑO','FREELANCERS WEB3 GLOBAL'],
+    expTitle:'QUÉ MUESTRA ESTE FLUJO',
+    expP1:'Cada día, <strong style="color:#2563eb;">$13,9M</strong> fluye de clientes a través de plataformas centralizadas hacia freelancers.',
+    expP2:'Upwork &amp; Fiverr cobran <strong style="color:#e84a2e;">15–20% en comisiones</strong> — dinero que nunca llega al freelancer.',
+    expP3:'<strong style="color:#1db954;">CrewBoard</strong> lo reemplaza con contratos inteligentes: solo <strong style="color:#1db954;">10% de comisión</strong>, ~3 seg, mundial.',
+    leg:['⬡ <span style="color:#1db954;font-weight:700;">Verde</span> = CrewBoard','● <span style="color:#8a9ab5;font-weight:700;">Gris</span> = Legacy','▼ <span style="color:#e84a2e;font-weight:700;">Rojo</span> = Comisiones'],
+    colC:'CLIENTES',colL:'PLATAF. LEGACY',colCB:'CREWBOARD',colF:'FREELANCERS',
+    bt:['PLATAFORMAS CENTRALIZADAS — DIARIO','CREWBOARD — MODELO WEB3','PROYECCIÓN CREWBOARD','INGRESOS CREWBOARD (10% COMISIÓN)'],
+    nl:{ENT:'Enterprise',SMB:'PYMEs / Scale',STUP:'Startups',DAO:'DAOs / Web3',FL_DEV:'Desarrollador',FL_DES:'Diseñador',FL_MKT:'Marketing',FL_DAT:'Datos / IA',FL_W3:'Web3 Dev'},
+  },
+  FR:{
+    tagline:"MARKETPLACE FREELANCE WEB3 — ANALYSE D'OPPORTUNITÉ DE MARCHÉ",
+    active:'● ANALYSE ACTIVE',
+    tl:['UPWORK / JOUR','FIVERR / JOUR','FRAIS PERDUS','OBJECTIF CREWBOARD / JOUR','ÉCONOMIES FREELANCER','TAM MARCHÉ / AN','FREELANCERS WEB3 GLOBAL'],
+    expTitle:'CE QUE MONTRE CE FLUX',
+    expP1:'Chaque jour, <strong style="color:#2563eb;">$13,9M</strong> circule des clients via des plateformes centralisées vers les freelancers.',
+    expP2:"Upwork &amp; Fiverr prélèvent <strong style=\"color:#e84a2e;\">15–20% de frais</strong> — argent qui n'atteint jamais le freelancer.",
+    expP3:'<strong style="color:#1db954;">CrewBoard</strong> remplace cela avec des contrats intelligents : seulement <strong style="color:#1db954;">10% de frais</strong>, ~3 sec, mondial.',
+    leg:['⬡ <span style="color:#1db954;font-weight:700;">Vert</span> = CrewBoard','● <span style="color:#8a9ab5;font-weight:700;">Gris</span> = Legacy','▼ <span style="color:#e84a2e;font-weight:700;">Rouge</span> = Fuite de frais'],
+    colC:'CLIENTS',colL:'PLATEF. LEGACY',colCB:'CREWBOARD',colF:'FREELANCERS',
+    bt:['PLATEFORMES CENTRALISÉES — QUOTIDIEN','CREWBOARD — MODÈLE WEB3','PROJECTION CREWBOARD','REVENUS CREWBOARD (10% DE FRAIS)'],
+    nl:{ENT:'Enterprise',SMB:'PME / Scale',STUP:'Startups',DAO:'DAOs / Web3',FL_DEV:'Développeur',FL_DES:'Designer',FL_MKT:'Marketing',FL_DAT:'Data / IA',FL_W3:'Web3 Dev'},
+  },
+  PT:{
+    tagline:'MARKETPLACE FREELANCE WEB3 — ANÁLISE DE OPORTUNIDADE DE MERCADO',
+    active:'● ANÁLISE ATIVA',
+    tl:['UPWORK / DIA','FIVERR / DIA','TAXAS PERDIDAS','META CREWBOARD / DIA','ECONOMIA FREELANCER','TAM MERCADO / ANO','FREELANCERS WEB3 GLOBAL'],
+    expTitle:'O QUE ESTE FLUXO MOSTRA',
+    expP1:'Todo dia, <strong style="color:#2563eb;">$13,9M</strong> flui de clientes através de plataformas centralizadas para freelancers.',
+    expP2:'Upwork &amp; Fiverr cobram <strong style="color:#e84a2e;">15–20% em taxas</strong> — dinheiro que nunca chega ao freelancer.',
+    expP3:'<strong style="color:#1db954;">CrewBoard</strong> substitui isso com contratos inteligentes: apenas <strong style="color:#1db954;">10% de taxa</strong>, ~3 seg, mundial.',
+    leg:['⬡ <span style="color:#1db954;font-weight:700;">Verde</span> = CrewBoard','● <span style="color:#8a9ab5;font-weight:700;">Cinza</span> = Legacy','▼ <span style="color:#e84a2e;font-weight:700;">Vermelho</span> = Drenagem de taxas'],
+    colC:'CLIENTES',colL:'PLATAF. LEGADA',colCB:'CREWBOARD',colF:'FREELANCERS',
+    bt:['PLATAFORMAS CENTRALIZADAS — DIÁRIO','CREWBOARD — MODELO WEB3','PROJEÇÃO CREWBOARD','RECEITA CREWBOARD (10% DE TAXA)'],
+    nl:{ENT:'Enterprise',SMB:'PME / Scale',STUP:'Startups',DAO:'DAOs / Web3',FL_DEV:'Desenvolvedor',FL_DES:'Designer',FL_MKT:'Marketing',FL_DAT:'Dados / IA',FL_W3:'Web3 Dev'},
+  },
+};
+
+function setLang(lang,btn){
+  activeLang=lang;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const t=T[lang];
+  document.getElementById('tagline').textContent=t.tagline;
+  document.getElementById('analysis-active').textContent=t.active;
+  const tls=document.querySelectorAll('#ticker .tick-label');
+  t.tl.forEach((txt,i)=>{if(tls[i])tls[i].textContent=txt;});
+  document.getElementById('exp-title').textContent=t.expTitle;
+  document.getElementById('exp-p1').innerHTML=t.expP1;
+  document.getElementById('exp-p2').innerHTML=t.expP2;
+  document.getElementById('exp-p3').innerHTML=t.expP3;
+  document.getElementById('exp-leg1').innerHTML=t.leg[0];
+  document.getElementById('exp-leg2').innerHTML=t.leg[1];
+  document.getElementById('exp-leg3').innerHTML=t.leg[2];
+  const bts=document.querySelectorAll('.b-title');
+  t.bt.forEach((txt,i)=>{if(bts[i])bts[i].textContent=txt;});
+  nodes.forEach(n=>{if(t.nl[n.id])n.label=t.nl[n.id];});
+}
+
 const COL = {
   ent:'#2563eb', smb:'#7c3aed', upwork:'#0f2a5e', fiverr:'#064e3b',
   cb:'#1db954', dev:'#0891b2', design:'#db2777', mkt:'#2563eb',
@@ -389,18 +518,76 @@ function fColor(f){
 }
 function getNode(id){return nodes.find(n=>n.id===id);}
 
+function isMob(){return window.innerWidth<768;}
+// header(48) + ticker(26) + scenarios-bar(28) = 102px on mobile
+function mobTopBar(){return isMob()?102:84;}
+function mobBotBar(){return isMob()?130:185;}
 function layout(){
-  const W=canvas.width,H=canvas.height,topBar=84,botBar=185,drawH=H-topBar-botBar;
+  const mob=isMob();
+  const W=canvas.width,H=canvas.height;
+  const topBar=mobTopBar(),botBar=mobBotBar(),drawH=H-topBar-botBar;
   const midY=topBar+drawH/2;
-  const xC=W*0.20,xPL=W*0.40,xCB=W*0.60,xFL=W*0.80;
+  // Mobile: 4 columns spread across full width, tighter
+  const xC=W*(mob?0.13:0.20),xPL=W*(mob?0.36:0.40),xCB=W*(mob?0.60:0.60),xFL=W*(mob?0.85:0.80);
+  const clsSp=mob?54:85,pltSp=mob?106:150,flSp=mob?44:62;
   const cls=nodes.filter(n=>n.type==='client');
-  cls.forEach((n,i)=>{n.x=xC;n.y=midY-(cls.length-1)*85/2+i*85;});
+  cls.forEach((n,i)=>{n.x=xC;n.y=midY-(cls.length-1)*clsSp/2+i*clsSp;});
   const plts=nodes.filter(n=>n.type==='platform');
-  plts.forEach((n,i)=>{n.x=xPL;n.y=midY-(plts.length-1)*150/2+i*150;});
+  plts.forEach((n,i)=>{n.x=xPL;n.y=midY-(plts.length-1)*pltSp/2+i*pltSp;});
   nodes.find(n=>n.id==='CB').x=xCB;
   nodes.find(n=>n.id==='CB').y=midY;
   const fls=nodes.filter(n=>n.type==='fl');
-  fls.forEach((n,i)=>{n.x=xFL;n.y=midY-(fls.length-1)*62/2+i*62;});
+  fls.forEach((n,i)=>{n.x=xFL;n.y=midY-(fls.length-1)*flSp/2+i*flSp;});
+}
+
+function applyMobileStyles(){
+  const mob=window.innerWidth<768;
+
+  // ── Header ──
+  const hdr=document.getElementById('header');
+  hdr.style.height=mob?'48px':'';
+  hdr.style.padding=mob?'0 12px':'';
+  document.querySelector('.tagline').style.display=mob?'none':'';
+  document.querySelectorAll('.lang-btn').forEach(b=>{b.style.fontSize=mob?'14px':'';b.style.padding=mob?'2px 3px':'';});
+  const blink=document.querySelector('.tick-blink');
+  if(blink)blink.style.fontSize=mob?'9px':'';
+
+  // ── Ticker ──
+  const ticker=document.getElementById('ticker');
+  if(mob){ticker.style.top='48px';ticker.style.height='26px';ticker.style.overflowX='auto';}
+  else{ticker.style.top='';ticker.style.height='';ticker.style.overflowX='';}
+  document.querySelectorAll('.tick-item').forEach(t=>{t.style.fontSize=mob?'10px':'';t.style.padding=mob?'0 10px':'';});
+
+  // ── Scenarios → horizontal bar on mobile ──
+  const sc=document.getElementById('scenarios');
+  if(mob){
+    sc.style.cssText='position:absolute;top:74px;left:0;right:0;width:100%;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:5px;padding:0 10px;height:28px;background:rgba(255,255,255,0.97);border-bottom:1px solid #e8ecf2;z-index:18;';
+    document.querySelectorAll('.sc-btn').forEach(b=>{b.style.fontSize='8px';b.style.padding='3px 12px';b.style.textAlign='center';});
+    document.getElementById('sc-label').style.display='none';
+  } else {
+    sc.style.cssText='';
+    document.querySelectorAll('.sc-btn').forEach(b=>{b.style.fontSize='';b.style.padding='';b.style.textAlign='';});
+    document.getElementById('sc-label').style.display='';
+  }
+
+  // ── Explainer → hide on mobile ──
+  document.getElementById('explainer').style.display=mob?'none':'';
+
+  // ── Bottom panel ──
+  const bot=document.getElementById('bottom');
+  if(mob){bot.style.height='130px';bot.style.overflowX='auto';bot.style.flexWrap='nowrap';}
+  else{bot.style.height='';bot.style.overflowX='';bot.style.flexWrap='';}
+  document.querySelectorAll('.b-panel').forEach(p=>{
+    if(mob){p.style.minWidth='170px';p.style.flex='0 0 170px';p.style.padding='8px 10px';}
+    else{p.style.minWidth='';p.style.flex='';p.style.padding='';}
+  });
+  document.querySelectorAll('.b-big').forEach(el=>{el.style.fontSize=mob?'18px':'';});
+  document.querySelectorAll('.b-title').forEach(el=>{el.style.fontSize=mob?'8px':'';el.style.letterSpacing=mob?'1px':'';});
+
+  // ── Node panel ──
+  const np=document.getElementById('node-panel');
+  if(mob){np.style.width='calc(100vw - 20px)';np.style.left='10px';np.style.right='10px';np.style.top='auto';np.style.bottom='140px';np.style.fontSize='10px';}
+  else{np.style.width='';np.style.left='';np.style.right='';np.style.top='';np.style.bottom='';np.style.fontSize='';}
 }
 
 class Particle{
@@ -472,19 +659,23 @@ function drawParticles(){
 }
 
 function drawFeeDrain(node){
+  const sc=isMob()?0.58:1;
+  const nr=node.r*sc;
   const pulse=(Math.sin(tick*0.05)+1)*0.5;
   for(let i=0;i<5;i++){
     const t2=((tick*0.018+i*0.2)%1);
-    const x=node.x+(Math.sin(i*1.4)*node.r*0.4);
-    const y0=node.y+node.r,y1=node.y+node.r*2.5+t2*55;
+    const x=node.x+(Math.sin(i*1.4)*nr*0.4);
+    const y0=node.y+nr,y1=node.y+nr*2.5+t2*55;
     ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x+Math.sin(t2*6)*4,y1);
     ctx.strokeStyle=COL.fee;ctx.lineWidth=1+i*0.3;ctx.globalAlpha=0.35*(1-t2)*pulse;ctx.stroke();
     ctx.beginPath();ctx.arc(x+Math.sin(t2*6)*4,y1,2,0,Math.PI*2);
     ctx.fillStyle=COL.fee;ctx.globalAlpha=0.25*(1-t2);ctx.fill();
   }
   ctx.globalAlpha=1;
-  ctx.fillStyle=COL.fee;ctx.globalAlpha=1;ctx.font='700 12px Space Grotesk';ctx.textAlign='center';
-  ctx.fillText(`-${Math.round(node.fee*100)}% FEE`,node.x,node.y+node.r+22);ctx.globalAlpha=1;
+  ctx.fillStyle=COL.fee;ctx.globalAlpha=1;
+  const feeFs=isMob()?9:12;
+  ctx.font=`700 ${feeFs}px Space Grotesk`;ctx.textAlign='center';
+  ctx.fillText(`-${Math.round(node.fee*100)}% FEE`,node.x,node.y+nr+20);ctx.globalAlpha=1;
 }
 
 function drawNode(n){
@@ -492,7 +683,8 @@ function drawNode(n){
   const isHov=hNode===n;
   const isRel=hNode&&flows.some(f=>(f.from===hNode.id&&f.to===n.id)||(f.to===hNode.id&&f.from===n.id));
   const pulse=Math.sin(tick*0.04+n.x*0.01)*0.5+0.5;
-  const r=n.r*(isHov?1.14:1);
+  const scale=isMob()?0.58:1;
+  const r=n.r*scale*(isHov?1.14:1);
 
   // CB glow
   if(n.type==='crewboard'){
@@ -536,9 +728,10 @@ function drawNode(n){
   ctx.fillStyle=iconCol; ctx.globalAlpha=1;
   ctx.textAlign='center';ctx.textBaseline='middle';
   if(n.id==='CB'){
-    ctx.font=`bold ${Math.max(12,r*0.30)}px Space Grotesk`;
+    ctx.font=`bold ${Math.max(8,r*0.30)}px Space Grotesk`;
     ctx.fillStyle='#1a2035';
-    ctx.fillText('CREW',n.x,n.y-8);ctx.fillText('BOARD',n.x,n.y+10);
+    const cbOff=Math.max(5,r*0.14);
+    ctx.fillText('CREW',n.x,n.y-cbOff);ctx.fillText('BOARD',n.x,n.y+cbOff*0.5);
   } else {
     ctx.font=`bold ${Math.max(9,r*0.44)}px Space Grotesk`;
     ctx.fillText(icons[n.id]||n.id,n.x,n.y);
@@ -546,24 +739,30 @@ function drawNode(n){
 
   // Label
   ctx.fillStyle='#000000';ctx.globalAlpha=1;
-  ctx.font=`600 ${Math.max(12,r*0.34)}px Space Grotesk`;ctx.textBaseline='top';
-  ctx.fillText(n.label,n.x,n.y+r+5);ctx.globalAlpha=1;
+  const lblSize=isMob()?Math.max(8,r*0.38):Math.max(12,r*0.34);
+  ctx.font=`600 ${lblSize}px Space Grotesk`;ctx.textBaseline='top';
+  ctx.fillText(n.label,n.x,n.y+r+3);ctx.globalAlpha=1;
 
   if(n.type==='platform') drawFeeDrain(n);
 }
 
 function drawColLabel(x,y,text,col){
-  ctx.fillStyle=col||'#1a2035';ctx.font='700 13px Space Grotesk';ctx.textAlign='center';
+  ctx.fillStyle=col||'#1a2035';
+  ctx.font=`700 ${isMob()?9:13}px Space Grotesk`;ctx.textAlign='center';
   ctx.fillText(text,x,y);
 }
 
 function drawDivider(){
+  const mob=isMob();
+  const topBar=mobTopBar(),botBar=mobBotBar();
   const x=canvas.width*0.50;
   ctx.setLineDash([3,8]);ctx.lineWidth=1;ctx.strokeStyle='rgba(37,99,235,0.12)';
-  ctx.beginPath();ctx.moveTo(x,84);ctx.lineTo(x,canvas.height-185);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,topBar);ctx.lineTo(x,canvas.height-botBar);ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle='rgba(37,99,235,0.35)';ctx.font='bold 8px Space Grotesk';ctx.textAlign='center';
-  ctx.fillText('← LEGACY          WEB3 →',x,92);
+  if(!mob){
+    ctx.fillStyle='rgba(37,99,235,0.35)';ctx.font='bold 8px Space Grotesk';ctx.textAlign='center';
+    ctx.fillText('← LEGACY          WEB3 →',x,topBar+8);
+  }
 }
 
 function drawGrid(){
@@ -581,11 +780,14 @@ function render(){
   ctx.fillStyle=bg;ctx.fillRect(0,0,canvas.width,canvas.height);
 
   drawGrid();drawDivider();
-  const W=canvas.width,H=canvas.height,topBar=84,botBar=185;
-  drawColLabel(W*0.20,topBar+16,'CLIENTS');
-  drawColLabel(W*0.40,topBar+16,'LEGACY PLATF.','rgba(232,67,46,0.5)');
-  drawColLabel(W*0.60,topBar+16,'CREWBOARD','rgba(29,185,84,0.8)');
-  drawColLabel(W*0.80,topBar+16,'FREELANCERS');
+  const mob=isMob();
+  const W=canvas.width,H=canvas.height,topBar=mobTopBar(),botBar=mobBotBar();
+  const lt=T[activeLang];
+  const xC=W*(mob?0.13:0.20),xPL=W*(mob?0.36:0.40),xCB=W*(mob?0.60:0.60),xFL=W*(mob?0.85:0.80);
+  drawColLabel(xC,topBar+14,lt.colC);
+  drawColLabel(xPL,topBar+14,lt.colL,'rgba(232,67,46,0.5)');
+  drawColLabel(xCB,topBar+14,lt.colCB,'rgba(29,185,84,0.8)');
+  drawColLabel(xFL,topBar+14,lt.colF);
 
   flows.forEach(f=>drawPath(f,false));
   if(hFlow)drawPath(hFlow,true);
@@ -595,7 +797,7 @@ function render(){
   requestAnimationFrame(render);
 }
 
-function getNodeAt(mx,my){return nodes.find(n=>Math.hypot(mx-n.x,my-n.y)<n.r+8);}
+function getNodeAt(mx,my){const sc=isMob()?0.58:1;return nodes.find(n=>Math.hypot(mx-n.x,my-n.y)<n.r*sc+8);}
 function getFlowAt(mx,my){
   let cl=null,md=16;
   flows.forEach(f=>{
@@ -665,6 +867,43 @@ canvas.addEventListener('click',e=>{
   if(n)openNodePanel(n);else document.getElementById('node-panel').style.display='none';
 });
 
+// Touch support
+let touchStartX=0,touchStartY=0,touchMoved=false;
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const t=e.touches[0],r=canvas.getBoundingClientRect();
+  touchStartX=t.clientX-r.left;touchStartY=t.clientY-r.top;touchMoved=false;
+  hNode=getNodeAt(touchStartX,touchStartY);
+  hFlow=hNode?null:getFlowAt(touchStartX,touchStartY);
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();touchMoved=true;
+  const t=e.touches[0],r=canvas.getBoundingClientRect();
+  const mx=t.clientX-r.left,my=t.clientY-r.top;
+  hNode=getNodeAt(mx,my);hFlow=hNode?null:getFlowAt(mx,my);
+  const tt=document.getElementById('tooltip');
+  if(hNode){
+    const col=nColor(hNode),fmt=v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v;
+    document.getElementById('tt-t').textContent=hNode.label.toUpperCase();
+    document.getElementById('tt-t').style.color=col;
+    document.getElementById('tt-type').textContent=hNode.type.toUpperCase();
+    document.getElementById('tt-vol').textContent=fmt(hNode.vol)+' / Day';
+    document.getElementById('tt-fee').textContent=hNode.fee?`${Math.round(hNode.fee*100)}%`:'None';
+    document.getElementById('tt-net').textContent=hNode.fee?fmt(Math.round(hNode.vol*(1-hNode.fee)))+' / Day':'—';
+    document.getElementById('tt-settle').textContent=hNode.settle||'—';
+    tt.style.display='block';tt.style.left=Math.min(t.clientX+14,window.innerWidth-180)+'px';tt.style.top=Math.max(t.clientY-60,80)+'px';
+  } else tt.style.display='none';
+},{passive:false});
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  document.getElementById('tooltip').style.display='none';
+  if(!touchMoved){
+    const n=getNodeAt(touchStartX,touchStartY);
+    if(n)openNodePanel(n);else document.getElementById('node-panel').style.display='none';
+  }
+  hNode=null;hFlow=null;
+},{passive:false});
+
 setInterval(()=>{
   flows.forEach(f=>{f.vol+=Math.floor((Math.random()-0.44)*f.vol*0.012);f.vol=Math.max(5000,f.vol);});
   const upw=flows.filter(f=>f.to==='UPW').reduce((s,f)=>s+f.vol,0);
@@ -681,8 +920,10 @@ setInterval(()=>{
   document.getElementById('b-lost').textContent='-'+fmt(fees);
 },2000);
 
-function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;layout();spawnParticles();}
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;applyMobileStyles();layout();spawnParticles();}
 window.addEventListener('resize',resize);
+// Apply mobile styles immediately on load (before first render, bypasses CSS cache)
+applyMobileStyles();
 resize();render();
 </script>
 </body>
