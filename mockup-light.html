@@ -227,10 +227,6 @@ canvas { display:block; }
 </style>
 </head>
 <body>
-<script>
-// Force fresh load on iOS Safari by appending version param
-(function(){var v='5';var u=window.location;if(u.search.indexOf('v=')<0){var sep=u.search?'&':'?';window.location.replace(u.pathname+u.search+sep+'v='+v);}})();
-</script>
 
 <div id="header">
   <div class="logo">CREW<span>BOARD</span></div>
@@ -282,9 +278,9 @@ canvas { display:block; }
   <div class="tt-title" id="tt-t">NODE</div>
   <div class="tt-row"><span class="tt-lbl">Type</span><span id="tt-type">-</span></div>
   <div class="tt-row"><span class="tt-lbl">Vol / Day</span><span id="tt-vol">-</span></div>
-  <div class="tt-row"><span class="tt-lbl">Fee</span><span class="tt-red" id="tt-fee">-</span></div>
-  <div class="tt-row"><span class="tt-lbl">Freelancer receives</span><span class="tt-green" id="tt-net">-</span></div>
-  <div class="tt-row"><span class="tt-lbl">Settlement</span><span id="tt-settle">-</span></div>
+  <div class="tt-row" id="tt-fee-row"><span class="tt-lbl">Fee</span><span class="tt-red" id="tt-fee">-</span></div>
+  <div class="tt-row" id="tt-net-row"><span class="tt-lbl">Freelancer receives</span><span class="tt-green" id="tt-net">-</span></div>
+  <div class="tt-row" id="tt-settle-row"><span class="tt-lbl">Settlement</span><span id="tt-settle">-</span></div>
 </div>
 
 <div id="node-panel">
@@ -843,15 +839,18 @@ canvas.addEventListener('mousemove',e=>{
   const fmt=v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v;
   if(hFlow){
     const fn=getNode(hFlow.from),tn=getNode(hFlow.to);
+    const hasFee=!!(fn?.fee)||(hFlow.type==='web3');
     const fee=Math.round(hFlow.vol*(fn?.fee||0)),col=hFlow.type==='web3'?COL.cb:fColor(hFlow);
     document.getElementById('tt-t').textContent=hFlow.type==='web3'?'⬡ CREWBOARD FLOW':'LEGACY FLOW';
     document.getElementById('tt-t').style.color=col;
     document.getElementById('tt-type').textContent=`${fn?.label} → ${tn?.label}`;
     document.getElementById('tt-vol').textContent=fmt(hFlow.vol)+' / Day';
+    document.getElementById('tt-fee-row').style.display=hasFee?'':'none';
+    document.getElementById('tt-net-row').style.display=hasFee?'':'none';
     document.getElementById('tt-fee').textContent=hFlow.type==='web3'?`10% → ${fmt(Math.round(hFlow.vol*0.10))}`:`${Math.round((fn?.fee||0)*100)}% → ${fmt(fee)}`;
-    document.getElementById('tt-net').textContent=fmt(hFlow.vol-fee)+' / Day';
+    document.getElementById('tt-net').textContent=hFlow.type==='web3'?fmt(hFlow.vol-Math.round(hFlow.vol*0.10))+' / Day':fmt(hFlow.vol-fee)+' / Day';
+    document.getElementById('tt-settle-row').style.display='';
     document.getElementById('tt-settle').textContent=hFlow.type==='web3'?'~3 sec. on-chain':'10–14 Days';
-    if(hFlow.type==='web3') document.getElementById('tt-net').textContent=fmt(hFlow.vol-Math.round(hFlow.vol*0.10))+' / Day';
     tt.style.display='block';tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-10)+'px';
   } else if(hNode){
     const col=nColor(hNode);
@@ -859,9 +858,12 @@ canvas.addEventListener('mousemove',e=>{
     document.getElementById('tt-t').style.color=col;
     document.getElementById('tt-type').textContent=hNode.type.toUpperCase();
     document.getElementById('tt-vol').textContent=fmt(hNode.vol)+' / Day';
-    document.getElementById('tt-fee').textContent=hNode.fee?`${Math.round(hNode.fee*100)}%`:'None';
-    document.getElementById('tt-net').textContent=hNode.fee?fmt(Math.round(hNode.vol*(1-hNode.fee)))+' / Day':'—';
-    document.getElementById('tt-settle').textContent=hNode.settle||'—';
+    document.getElementById('tt-fee-row').style.display=hNode.fee?'':'none';
+    document.getElementById('tt-net-row').style.display=hNode.fee?'':'none';
+    document.getElementById('tt-fee').textContent=hNode.fee?`${Math.round(hNode.fee*100)}%`:'';
+    document.getElementById('tt-net').textContent=hNode.fee?fmt(Math.round(hNode.vol*(1-hNode.fee)))+' / Day':'';
+    document.getElementById('tt-settle-row').style.display=hNode.settle?'':'none';
+    document.getElementById('tt-settle').textContent=hNode.settle||'';
     tt.style.display='block';tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-10)+'px';
   } else tt.style.display='none';
 });
@@ -892,9 +894,12 @@ canvas.addEventListener('touchmove',e=>{
     document.getElementById('tt-t').style.color=col;
     document.getElementById('tt-type').textContent=hNode.type.toUpperCase();
     document.getElementById('tt-vol').textContent=fmt(hNode.vol)+' / Day';
-    document.getElementById('tt-fee').textContent=hNode.fee?`${Math.round(hNode.fee*100)}%`:'None';
-    document.getElementById('tt-net').textContent=hNode.fee?fmt(Math.round(hNode.vol*(1-hNode.fee)))+' / Day':'—';
-    document.getElementById('tt-settle').textContent=hNode.settle||'—';
+    document.getElementById('tt-fee-row').style.display=hNode.fee?'':'none';
+    document.getElementById('tt-net-row').style.display=hNode.fee?'':'none';
+    document.getElementById('tt-fee').textContent=hNode.fee?`${Math.round(hNode.fee*100)}%`:'';
+    document.getElementById('tt-net').textContent=hNode.fee?fmt(Math.round(hNode.vol*(1-hNode.fee)))+' / Day':'';
+    document.getElementById('tt-settle-row').style.display=hNode.settle?'':'none';
+    document.getElementById('tt-settle').textContent=hNode.settle||'';
     tt.style.display='block';tt.style.left=Math.min(t.clientX+14,window.innerWidth-180)+'px';tt.style.top=Math.max(t.clientY-60,80)+'px';
   } else tt.style.display='none';
 },{passive:false});
